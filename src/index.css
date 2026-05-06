@@ -1,0 +1,46 @@
+@import "tailwindcss";
+
+@theme {
+  --font-sans: "Inter", ui-sans-serif, system-ui, sans-serif;
+  --font-child: "Outfit", "Inter", sans-serif;
+  
+  --color-lumi-cream: #fbfbf8;
+  --color-lumi-olive: #5a5a40;
+  --color-lumi-sand: #f5f2ed;
+  --color-lumi-soft-blue: #e0e7ff;
+  --color-lumi-soft-green: #dcfce7;
+  --color-lumi-soft-yellow: #fef9c3;
+  --color-lumi-soft-red: #fee2e2;
+}
+
+@layer base {
+  body {
+    @apply bg-lumi-cream text-slate-900 font-sans;
+  }
+}
+
+@layer components {
+  .btn-child {
+    @apply rounded-3xl p-6 text-2xl font-child font-bold transition-all active:scale-95 shadow-sm border-2;
+  }
+  
+  .card-lumi {
+    @apply bg-white rounded-[32px] p-8 shadow-sm border border-lumi-sand;
+  }
+
+  .low-stimulus {
+    @apply grayscale-[0.3] brightness-[0.95];
+  }
+
+  .shake {
+    animation: shake 0.5s cubic-bezier(.36,.07,.19,.97) both;
+    transform: translate3d(0, 0, 0);
+  }
+
+  @keyframes shake {
+    10%, 90% { transform: translate3d(-1px, 0, 0); }
+    20%, 80% { transform: translate3d(2px, 0, 0); }
+    30%, 50%, 70% { transform: translate3d(-4px, 0, 0); }
+    40%, 60% { transform: translate3d(4px, 0, 0); }
+  }
+}
