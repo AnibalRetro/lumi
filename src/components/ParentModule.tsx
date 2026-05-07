@@ -57,6 +57,15 @@ interface PlanChangesState {
   activeId: string | null;
 }
 
+interface TriggerLog {
+  id: string;
+  date: string;
+  event: string;
+  trigger: string;
+  helpfulStrategy: string;
+  notes: string;
+}
+
 const defaultPlanExamples: PlanChange[] = [
   { id: '1', beforeGoingTo: 'Parque', nowGoingTo: 'Casa', stillTheSame: 'Jugaremos juntos', canDoThis: 'Elegir un juego tranquilo', calmMessage: 'Estoy contigo, vamos paso a paso.' },
   { id: '2', beforeGoingTo: 'Escuela', nowGoingTo: 'Casa', stillTheSame: 'Tu rutina de comida sigue igual', canDoThis: 'Preparar tu espacio favorito', calmMessage: 'Respiramos juntos y seguimos el plan nuevo.' },
@@ -133,6 +142,13 @@ const ParentHome = () => {
       desc: 'Crea y activa mensajes para transiciones inesperadas.',
       icon: <RefreshCcw size={32} />,
       color: 'bg-indigo-50 border-indigo-100 text-indigo-700'
+    },
+    {
+      path: 'registro-detonantes',
+      label: 'Registro de detonantes',
+      desc: 'Documenta eventos, detonantes y apoyos que funcionaron.',
+      icon: <AlertCircle size={32} />,
+      color: 'bg-orange-50 border-orange-100 text-orange-700'
     },
     {
       path: 'directorio', 
@@ -526,6 +542,131 @@ const PlanChangesPage = () => {
   );
 };
 
+const TriggerLogsPage = () => {
+  const [logs, setLogs] = useState<TriggerLog[]>(() => getStorageItem<TriggerLog[]>(LUMI_STORAGE_KEYS.triggerLogs, []) ?? []);
+  const [form, setForm] = useState({
+    date: new Date().toISOString().slice(0, 10),
+    event: 'Llanto',
+    trigger: 'Ruido',
+    helpfulStrategy: 'Silencio',
+    notes: '',
+  });
+
+  const eventOptions = ['Llanto', 'Gritos', 'Se tapó los oídos', 'Se aisló', 'Se frustró', 'No quiso continuar', 'Otro'];
+  const triggerOptions = ['Ruido', 'Hambre', 'Sueño', 'Cambio de rutina', 'Mucha gente', 'Luz intensa', 'Frustración', 'Dolor', 'Espera larga', 'No entendió la instrucción'];
+  const strategyOptions = ['Silencio', 'Descanso', 'Agua', 'Abrazo', 'Estar solo', 'Audífonos', 'Respiración', 'Objeto favorito', 'Cambiar actividad'];
+
+  const persistLogs = (nextLogs: TriggerLog[]) => {
+    setLogs(nextLogs);
+    setStorageItem(LUMI_STORAGE_KEYS.triggerLogs, nextLogs);
+  };
+
+  const addLog = () => {
+    const next: TriggerLog = {
+      id: crypto.randomUUID(),
+      date: form.date,
+      event: form.event,
+      trigger: form.trigger,
+      helpfulStrategy: form.helpfulStrategy,
+      notes: form.notes.trim(),
+    };
+    persistLogs([next, ...logs]);
+    setForm((prev) => ({ ...prev, notes: '' }));
+  };
+
+  const countBy = (items: TriggerLog[], key: 'trigger' | 'helpfulStrategy') => {
+    const map = new Map<string, number>();
+    items.forEach((item) => map.set(item[key], (map.get(item[key]) ?? 0) + 1));
+    return Array.from(map.entries()).sort((a, b) => b[1] - a[1])[0]?.[0] ?? 'N/A';
+  };
+
+  const topTrigger = countBy(logs, 'trigger');
+  const topStrategy = countBy(logs, 'helpfulStrategy');
+
+  return (
+    <div className="max-w-5xl mx-auto space-y-8">
+      <div className="space-y-2">
+        <h2 className="text-3xl font-bold text-slate-900">Registro de detonantes</h2>
+        <p className="text-slate-500">Anota situaciones para identificar qué apoyos funcionaron mejor.</p>
+      </div>
+
+      <div className="card-lumi space-y-4">
+        <div className="grid md:grid-cols-2 gap-4">
+          <label className="space-y-2">
+            <span className="text-sm font-semibold text-slate-700">Fecha</span>
+            <input type="date" value={form.date} onChange={(e) => setForm((p) => ({ ...p, date: e.target.value }))} className="w-full bg-white border border-slate-200 rounded-2xl px-4 py-3" />
+          </label>
+          <label className="space-y-2">
+            <span className="text-sm font-semibold text-slate-700">Qué ocurrió</span>
+            <select value={form.event} onChange={(e) => setForm((p) => ({ ...p, event: e.target.value }))} className="w-full bg-white border border-slate-200 rounded-2xl px-4 py-3">
+              {eventOptions.map((o) => <option key={o}>{o}</option>)}
+            </select>
+          </label>
+          <label className="space-y-2">
+            <span className="text-sm font-semibold text-slate-700">Qué pasó antes</span>
+            <select value={form.trigger} onChange={(e) => setForm((p) => ({ ...p, trigger: e.target.value }))} className="w-full bg-white border border-slate-200 rounded-2xl px-4 py-3">
+              {triggerOptions.map((o) => <option key={o}>{o}</option>)}
+            </select>
+          </label>
+          <label className="space-y-2">
+            <span className="text-sm font-semibold text-slate-700">Qué ayudó</span>
+            <select value={form.helpfulStrategy} onChange={(e) => setForm((p) => ({ ...p, helpfulStrategy: e.target.value }))} className="w-full bg-white border border-slate-200 rounded-2xl px-4 py-3">
+              {strategyOptions.map((o) => <option key={o}>{o}</option>)}
+            </select>
+          </label>
+        </div>
+
+        <label className="space-y-2 block">
+          <span className="text-sm font-semibold text-slate-700">Notas opcionales</span>
+          <textarea value={form.notes} onChange={(e) => setForm((p) => ({ ...p, notes: e.target.value }))} className="w-full bg-white border border-slate-200 rounded-2xl px-4 py-3 min-h-24" />
+        </label>
+
+        <button type="button" onClick={addLog} className="bg-slate-900 text-white px-6 py-3 rounded-2xl font-bold">
+          Guardar registro
+        </button>
+      </div>
+
+      <div className="grid md:grid-cols-3 gap-4">
+        <div className="card-lumi text-center">
+          <p className="text-xs uppercase tracking-widest text-slate-400 font-bold">Total de registros</p>
+          <p className="text-3xl font-bold text-slate-800 mt-2">{logs.length}</p>
+        </div>
+        <div className="card-lumi text-center">
+          <p className="text-xs uppercase tracking-widest text-slate-400 font-bold">Detonante más frecuente</p>
+          <p className="text-xl font-bold text-slate-800 mt-2">{topTrigger}</p>
+        </div>
+        <div className="card-lumi text-center">
+          <p className="text-xs uppercase tracking-widest text-slate-400 font-bold">Estrategia más usada</p>
+          <p className="text-xl font-bold text-slate-800 mt-2">{topStrategy}</p>
+        </div>
+      </div>
+
+      <div className="card-lumi space-y-3">
+        <h3 className="text-xl font-bold">Historial</h3>
+        {logs.length === 0 ? (
+          <p className="text-slate-500">Aún no hay registros.</p>
+        ) : (
+          <div className="space-y-3">
+            {logs.map((log) => (
+              <div key={log.id} className="bg-white border border-slate-200 rounded-2xl p-4 grid md:grid-cols-4 gap-3 text-sm">
+                <div><p className="text-slate-400 text-xs uppercase font-bold">Fecha</p><p>{log.date}</p></div>
+                <div><p className="text-slate-400 text-xs uppercase font-bold">Ocurrió</p><p>{log.event}</p></div>
+                <div><p className="text-slate-400 text-xs uppercase font-bold">Detonante</p><p>{log.trigger}</p></div>
+                <div><p className="text-slate-400 text-xs uppercase font-bold">Qué ayudó</p><p>{log.helpfulStrategy}</p></div>
+                {log.notes && <div className="md:col-span-4"><p className="text-slate-400 text-xs uppercase font-bold">Notas</p><p>{log.notes}</p></div>}
+              </div>
+            ))}
+          </div>
+        )}
+      </div>
+
+      <div className="bg-lumi-soft-yellow border border-amber-200 rounded-2xl p-5 text-amber-900 text-sm">
+        Este registro puede ayudarte a observar patrones y compartir información útil con profesionales, maestros o cuidadores. No representa un diagnóstico.
+      </div>
+    </div>
+  );
+};
+
 // --- Autism Info ---
 
 const AutismInfo = () => {
@@ -715,6 +856,7 @@ export default function ParentModule() {
         <Route path="/accesibilidad" element={<AccessibilityPage />} />
         <Route path="/historial-me-duele" element={<PainHistoryPage />} />
         <Route path="/cambio-planes" element={<PlanChangesPage />} />
+        <Route path="/registro-detonantes" element={<TriggerLogsPage />} />
         <Route path="/directorio" element={<ClinicsDirectory />} />
         <Route path="/recursos" element={<Resources />} />
       </Routes>
