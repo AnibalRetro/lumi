@@ -14,7 +14,11 @@ export const LUMI_STORAGE_DEFAULTS = {
   [LUMI_STORAGE_KEYS.accessibilitySettings]: {
     lowStimulus: false,
     soundEnabled: true,
+    voiceEnabled: true,
     fontSize: 'normal',
+    motion: 'normal',
+    contrast: 'suave',
+    showTextWithImages: true,
   },
   [LUMI_STORAGE_KEYS.progress]: {
     completedRoutines: [],

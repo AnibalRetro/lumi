@@ -3,7 +3,7 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import { useState } from 'react';
+import { useState, useContext } from 'react';
 import { Routes, Route, Link, useNavigate } from 'react-router-dom';
 import { motion } from 'motion/react';
 import { 
@@ -24,6 +24,7 @@ import {
 import { cn } from '../lib/utils';
 import { clinics } from '../data/mockData';
 import { getStorageItem, setStorageItem, LUMI_STORAGE_KEYS } from '../utils/storage';
+import { SettingsContext } from '../App';
 
 interface ChildProfile {
   avatar: string;
@@ -82,6 +83,13 @@ const ParentHome = () => {
       desc: 'Configura preferencias básicas para personalizar su experiencia.',
       icon: <HeartHandshake size={32} />,
       color: 'bg-violet-50 border-violet-100 text-violet-700'
+    },
+    {
+      path: 'accesibilidad',
+      label: 'Accesibilidad',
+      desc: 'Ajusta visualización, movimiento y apoyos de lectura.',
+      icon: <Globe size={32} />,
+      color: 'bg-slate-50 border-slate-200 text-slate-700'
     },
     {
       path: 'directorio', 
@@ -300,6 +308,69 @@ const ChildProfilePage = () => {
   );
 };
 
+const AccessibilityPage = () => {
+  const { settings, updateSettings } = useContext(SettingsContext);
+
+  return (
+    <div className="max-w-4xl mx-auto space-y-8">
+      <div className="space-y-2">
+        <h2 className="text-3xl font-bold text-slate-900">Accesibilidad</h2>
+        <p className="text-slate-500">Personaliza la experiencia visual y de apoyo.</p>
+      </div>
+
+      <div className="card-lumi space-y-8">
+        <section className="grid md:grid-cols-2 gap-4">
+          <button type="button" onClick={() => updateSettings({ lowStimulus: !settings.lowStimulus })} className="text-left bg-white border border-slate-200 rounded-2xl p-4">
+            <p className="font-bold">Modo bajo estímulo</p>
+            <p className="text-sm text-slate-500 mt-1">{settings.lowStimulus ? 'Activado' : 'Desactivado'}</p>
+          </button>
+          <button type="button" onClick={() => updateSettings({ soundEnabled: !settings.soundEnabled })} className="text-left bg-white border border-slate-200 rounded-2xl p-4">
+            <p className="font-bold">Sonidos</p>
+            <p className="text-sm text-slate-500 mt-1">{settings.soundEnabled ? 'Activados' : 'Desactivados'}</p>
+          </button>
+          <button type="button" onClick={() => updateSettings({ voiceEnabled: !settings.voiceEnabled })} className="text-left bg-white border border-slate-200 rounded-2xl p-4">
+            <p className="font-bold">Voz</p>
+            <p className="text-sm text-slate-500 mt-1">{settings.voiceEnabled ? 'Activada' : 'Desactivada'}</p>
+          </button>
+          <button type="button" onClick={() => updateSettings({ showTextWithImages: !settings.showTextWithImages })} className="text-left bg-white border border-slate-200 rounded-2xl p-4">
+            <p className="font-bold">Mostrar texto junto a imágenes</p>
+            <p className="text-sm text-slate-500 mt-1">{settings.showTextWithImages ? 'Sí' : 'No'}</p>
+          </button>
+        </section>
+
+        <section className="grid md:grid-cols-3 gap-4">
+          <label className="space-y-2">
+            <span className="text-sm font-semibold text-slate-700">Tamaño de texto</span>
+            <select value={settings.fontSize} onChange={(e) => updateSettings({ fontSize: e.target.value as 'normal' | 'large' | 'xlarge' })} className="w-full bg-white border border-slate-200 rounded-2xl px-4 py-3 outline-none">
+              <option value="normal">Normal</option>
+              <option value="large">Grande</option>
+              <option value="xlarge">Muy grande</option>
+            </select>
+          </label>
+          <label className="space-y-2">
+            <span className="text-sm font-semibold text-slate-700">Movimiento</span>
+            <select value={settings.motion} onChange={(e) => updateSettings({ motion: e.target.value as 'normal' | 'reducido' })} className="w-full bg-white border border-slate-200 rounded-2xl px-4 py-3 outline-none">
+              <option value="normal">Normal</option>
+              <option value="reducido">Reducido</option>
+            </select>
+          </label>
+          <label className="space-y-2">
+            <span className="text-sm font-semibold text-slate-700">Contraste</span>
+            <select value={settings.contrast} onChange={(e) => updateSettings({ contrast: e.target.value as 'suave' | 'alto' })} className="w-full bg-white border border-slate-200 rounded-2xl px-4 py-3 outline-none">
+              <option value="suave">Suave</option>
+              <option value="alto">Alto</option>
+            </select>
+          </label>
+        </section>
+
+        <div className="text-sm text-slate-500 bg-slate-50 border border-slate-200 rounded-2xl p-4">
+          Estos ajustes se guardan automáticamente en este dispositivo.
+        </div>
+      </div>
+    </div>
+  );
+};
+
 // --- Autism Info ---
 
 const AutismInfo = () => {
@@ -486,6 +557,7 @@ export default function ParentModule() {
         <Route path="/autismo" element={<AutismInfo />} />
         <Route path="/apoyo-casa" element={<div className="text-center py-20"><h2 className="text-3xl font-bold uppercase tracking-widest opacity-20">Contenido en construcción</h2></div>} />
         <Route path="/perfil-nino" element={<ChildProfilePage />} />
+        <Route path="/accesibilidad" element={<AccessibilityPage />} />
         <Route path="/directorio" element={<ClinicsDirectory />} />
         <Route path="/recursos" element={<Resources />} />
       </Routes>
