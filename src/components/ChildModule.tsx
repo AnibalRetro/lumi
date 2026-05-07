@@ -34,6 +34,11 @@ import * as Icons from 'lucide-react';
 import { cn } from '../lib/utils';
 import { initialRoutines, emotions, needs, socialStories, gameScenarios, emotionChallenges, routineSequences, RoutineItem } from '../data/mockData';
 import { SettingsContext } from '../App';
+import { getStorageItem, LUMI_STORAGE_KEYS } from '../utils/storage';
+
+interface ChildProfile {
+  nickname?: string;
+}
 
 // --- Helpers ---
 
@@ -63,6 +68,8 @@ const IconComponent = ({ name, size = 24 }: { name: string; size?: number }) => 
 
 const ChildHome = () => {
   const { speak } = useSpeech();
+  const childProfile = getStorageItem<ChildProfile>(LUMI_STORAGE_KEYS.childProfile);
+  const childName = childProfile?.nickname?.trim();
   const menuItems = [
     { path: 'rutina', label: 'Mi Rutina', icon: 'Calendar', color: 'bg-orange-100 text-orange-600 border-orange-200' },
     { path: 'primero-despues', label: 'Primero / Después', icon: 'ArrowRightLeft', color: 'bg-blue-100 text-blue-600 border-blue-200' },
@@ -78,6 +85,7 @@ const ChildHome = () => {
     <div className="space-y-8">
       <div className="text-center">
         <h2 className="text-4xl font-child font-bold text-slate-800">¡Hola! ¿Qué quieres hacer hoy?</h2>
+        {childName && <p className="text-slate-500 mt-2 font-medium">Hola, {childName}</p>}
       </div>
       
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">

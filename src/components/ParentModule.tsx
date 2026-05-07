@@ -23,6 +23,40 @@ import {
 } from 'lucide-react';
 import { cn } from '../lib/utils';
 import { clinics } from '../data/mockData';
+import { getStorageItem, setStorageItem, LUMI_STORAGE_KEYS } from '../utils/storage';
+
+interface ChildProfile {
+  avatar: string;
+  nickname: string;
+  age: string;
+  preferredTheme: string;
+  readingLevel: string;
+  supportStyle: string;
+  sensitivities: string[];
+  helpfulStrategies: string[];
+}
+
+const avatarOptions = ['🦊', '🐼', '🦁', '🐯', '🐬', '🦄'];
+const readingLevelOptions = [
+  'No lee todavía',
+  'Reconoce letras',
+  'Lee palabras cortas',
+  'Lee frases simples',
+];
+const supportStyleOptions = ['Imágenes', 'Texto', 'Audio', 'Imágenes + texto', 'Imágenes + audio'];
+const sensitivityOptions = ['Ruido', 'Luz', 'Texturas', 'Multitudes', 'Cambios de rutina', 'Contacto físico', 'Olores'];
+const strategyOptions = ['Silencio', 'Audífonos', 'Respirar', 'Tomar agua', 'Descansar', 'Abrazo', 'Estar solo'];
+
+const defaultChildProfile: ChildProfile = {
+  avatar: avatarOptions[0],
+  nickname: '',
+  age: '',
+  preferredTheme: '',
+  readingLevel: readingLevelOptions[0],
+  supportStyle: supportStyleOptions[0],
+  sensitivities: [],
+  helpfulStrategies: [],
+};
 
 // --- Parent Home ---
 
@@ -43,6 +77,13 @@ const ParentHome = () => {
       color: 'bg-emerald-50 border-emerald-100 text-emerald-700'
     },
     { 
+      path: 'perfil-nino',
+      label: 'Perfil del niño',
+      desc: 'Configura preferencias básicas para personalizar su experiencia.',
+      icon: <HeartHandshake size={32} />,
+      color: 'bg-violet-50 border-violet-100 text-violet-700'
+    },
+    {
       path: 'directorio', 
       label: 'Directorio México', 
       desc: 'Clínicas, asociaciones y centros especializados.',
@@ -94,6 +135,166 @@ const ParentHome = () => {
           <p className="text-slate-400">Estamos trabajando en un foro seguro para conectar con otras familias.</p>
         </div>
         <div className="px-6 py-2 bg-white/10 rounded-full text-sm font-bold uppercase tracking-widest border border-white/20">Próximamente</div>
+      </div>
+    </div>
+  );
+};
+
+const ChildProfilePage = () => {
+  const [profile, setProfile] = useState<ChildProfile>(() => {
+    return getStorageItem<ChildProfile>(LUMI_STORAGE_KEYS.childProfile, defaultChildProfile) ?? defaultChildProfile;
+  });
+  const [saved, setSaved] = useState(false);
+
+  const handleSave = () => {
+    setStorageItem(LUMI_STORAGE_KEYS.childProfile, profile);
+    setSaved(true);
+    setTimeout(() => setSaved(false), 1800);
+  };
+
+  const toggleArrayValue = (key: 'sensitivities' | 'helpfulStrategies', value: string) => {
+    setProfile((prev) => {
+      const hasValue = prev[key].includes(value);
+      return {
+        ...prev,
+        [key]: hasValue ? prev[key].filter((item) => item !== value) : [...prev[key], value],
+      };
+    });
+  };
+
+  return (
+    <div className="max-w-4xl mx-auto space-y-8">
+      <div className="space-y-2">
+        <h2 className="text-3xl font-bold text-slate-900">Perfil del niño</h2>
+        <p className="text-slate-500">Configura datos básicos y preferencias de apoyo.</p>
+      </div>
+
+      <div className="card-lumi space-y-8">
+        <section className="space-y-3">
+          <p className="text-sm font-bold uppercase tracking-widest text-slate-400">Avatar animado</p>
+          <div className="flex flex-wrap gap-3">
+            {avatarOptions.map((avatar) => (
+              <button
+                key={avatar}
+                type="button"
+                onClick={() => setProfile((prev) => ({ ...prev, avatar }))}
+                className={cn(
+                  'w-14 h-14 rounded-2xl border-2 text-3xl bg-white transition-all hover:scale-105',
+                  profile.avatar === avatar ? 'border-lumi-olive shadow-sm' : 'border-slate-200'
+                )}
+              >
+                {avatar}
+              </button>
+            ))}
+          </div>
+        </section>
+
+        <section className="grid md:grid-cols-2 gap-4">
+          <label className="space-y-2">
+            <span className="text-sm font-semibold text-slate-700">Nombre o apodo</span>
+            <input
+              value={profile.nickname}
+              onChange={(e) => setProfile((prev) => ({ ...prev, nickname: e.target.value }))}
+              placeholder="Ej. Alex"
+              className="w-full bg-white border border-slate-200 rounded-2xl px-4 py-3 outline-none focus:ring-2 focus:ring-lumi-olive"
+            />
+          </label>
+          <label className="space-y-2">
+            <span className="text-sm font-semibold text-slate-700">Edad</span>
+            <input
+              value={profile.age}
+              onChange={(e) => setProfile((prev) => ({ ...prev, age: e.target.value }))}
+              placeholder="Ej. 7"
+              className="w-full bg-white border border-slate-200 rounded-2xl px-4 py-3 outline-none focus:ring-2 focus:ring-lumi-olive"
+            />
+          </label>
+        </section>
+
+        <label className="space-y-2 block">
+          <span className="text-sm font-semibold text-slate-700">Color o tema preferido</span>
+          <input
+            value={profile.preferredTheme}
+            onChange={(e) => setProfile((prev) => ({ ...prev, preferredTheme: e.target.value }))}
+            placeholder="Ej. Azul, naturaleza, espacio..."
+            className="w-full bg-white border border-slate-200 rounded-2xl px-4 py-3 outline-none focus:ring-2 focus:ring-lumi-olive"
+          />
+        </label>
+
+        <section className="grid md:grid-cols-2 gap-4">
+          <label className="space-y-2">
+            <span className="text-sm font-semibold text-slate-700">Nivel de lectura</span>
+            <select
+              value={profile.readingLevel}
+              onChange={(e) => setProfile((prev) => ({ ...prev, readingLevel: e.target.value }))}
+              className="w-full bg-white border border-slate-200 rounded-2xl px-4 py-3 outline-none focus:ring-2 focus:ring-lumi-olive"
+            >
+              {readingLevelOptions.map((option) => <option key={option}>{option}</option>)}
+            </select>
+          </label>
+          <label className="space-y-2">
+            <span className="text-sm font-semibold text-slate-700">Forma de apoyo preferida</span>
+            <select
+              value={profile.supportStyle}
+              onChange={(e) => setProfile((prev) => ({ ...prev, supportStyle: e.target.value }))}
+              className="w-full bg-white border border-slate-200 rounded-2xl px-4 py-3 outline-none focus:ring-2 focus:ring-lumi-olive"
+            >
+              {supportStyleOptions.map((option) => <option key={option}>{option}</option>)}
+            </select>
+          </label>
+        </section>
+
+        <section className="space-y-3">
+          <p className="text-sm font-bold uppercase tracking-widest text-slate-400">Sensibilidades comunes</p>
+          <div className="flex flex-wrap gap-2">
+            {sensitivityOptions.map((item) => (
+              <button
+                key={item}
+                type="button"
+                onClick={() => toggleArrayValue('sensitivities', item)}
+                className={cn(
+                  'px-4 py-2 rounded-full border text-sm font-medium transition-all',
+                  profile.sensitivities.includes(item)
+                    ? 'bg-amber-100 border-amber-300 text-amber-800'
+                    : 'bg-white border-slate-200 text-slate-600'
+                )}
+              >
+                {item}
+              </button>
+            ))}
+          </div>
+        </section>
+
+        <section className="space-y-3">
+          <p className="text-sm font-bold uppercase tracking-widest text-slate-400">Estrategias que ayudan</p>
+          <div className="flex flex-wrap gap-2">
+            {strategyOptions.map((item) => (
+              <button
+                key={item}
+                type="button"
+                onClick={() => toggleArrayValue('helpfulStrategies', item)}
+                className={cn(
+                  'px-4 py-2 rounded-full border text-sm font-medium transition-all',
+                  profile.helpfulStrategies.includes(item)
+                    ? 'bg-emerald-100 border-emerald-300 text-emerald-800'
+                    : 'bg-white border-slate-200 text-slate-600'
+                )}
+              >
+                {item}
+              </button>
+            ))}
+          </div>
+        </section>
+
+        <div className="flex items-center gap-4">
+          <button
+            type="button"
+            onClick={handleSave}
+            className="bg-slate-900 text-white px-6 py-3 rounded-2xl font-bold hover:bg-lumi-olive transition-all"
+          >
+            Guardar perfil
+          </button>
+          {saved && <span className="text-sm font-semibold text-emerald-700">Perfil guardado en este dispositivo.</span>}
+        </div>
       </div>
     </div>
   );
@@ -284,6 +485,7 @@ export default function ParentModule() {
         <Route path="/" element={<ParentHome />} />
         <Route path="/autismo" element={<AutismInfo />} />
         <Route path="/apoyo-casa" element={<div className="text-center py-20"><h2 className="text-3xl font-bold uppercase tracking-widest opacity-20">Contenido en construcción</h2></div>} />
+        <Route path="/perfil-nino" element={<ChildProfilePage />} />
         <Route path="/directorio" element={<ClinicsDirectory />} />
         <Route path="/recursos" element={<Resources />} />
       </Routes>
