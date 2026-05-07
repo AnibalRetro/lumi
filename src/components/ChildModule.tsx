@@ -34,10 +34,16 @@ import * as Icons from 'lucide-react';
 import { cn } from '../lib/utils';
 import { initialRoutines, emotions, needs, socialStories, gameScenarios, emotionChallenges, routineSequences, RoutineItem } from '../data/mockData';
 import { SettingsContext } from '../App';
-import { getStorageItem, LUMI_STORAGE_KEYS } from '../utils/storage';
+import { getStorageItem, setStorageItem, LUMI_STORAGE_KEYS } from '../utils/storage';
 
 interface ChildProfile {
   nickname?: string;
+}
+
+interface PainReport {
+  timestamp: string;
+  bodyPart: string;
+  intensity: 'Poquito' | 'Medio' | 'Mucho';
 }
 
 // --- Helpers ---
@@ -79,6 +85,7 @@ const ChildHome = () => {
     { path: 'historias', label: 'Historias', icon: 'BookOpen', color: 'bg-pink-100 text-pink-600 border-pink-200' },
     { path: 'juegos', label: 'Juegos', icon: 'Gamepad2', color: 'bg-cyan-100 text-cyan-600 border-cyan-200' },
     { path: 'aprendizaje', label: 'Aprendizaje', icon: 'GraduationCap', color: 'bg-emerald-100 text-emerald-600 border-emerald-200' },
+    { path: 'me-duele', label: 'Me duele', icon: 'Heart', color: 'bg-rose-100 text-rose-600 border-rose-200' },
   ];
 
   return (
@@ -106,6 +113,91 @@ const ChildHome = () => {
           </Link>
         ))}
       </div>
+    </div>
+  );
+};
+
+const PainModule = () => {
+  const [bodyPart, setBodyPart] = useState<string | null>(null);
+  const [intensity, setIntensity] = useState<PainReport['intensity'] | null>(null);
+  const { speak } = useSpeech();
+
+  const bodyParts = ['Cabeza', 'Ojos', 'Oído', 'Boca', 'Garganta', 'Dientes', 'Panza', 'Espalda', 'Brazo', 'Mano', 'Pierna', 'Pie', 'Todo el cuerpo', 'No sé'];
+  const actions = ['Pedir ayuda', 'Avisar a mamá/papá', 'Descansar', 'Tomar agua', 'Ir a un lugar tranquilo'];
+
+  const finalPhrase = bodyPart && intensity ? `Me duele ${bodyPart === 'No sé' ? 'no sé dónde' : `la ${bodyPart.toLowerCase()}`} ${intensity.toLowerCase()}.` : '';
+
+  const saveReport = (selectedIntensity: PainReport['intensity']) => {
+    if (!bodyPart) return;
+    const currentReports = getStorageItem<PainReport[]>(LUMI_STORAGE_KEYS.painReports, []) ?? [];
+    const newReport: PainReport = {
+      timestamp: new Date().toISOString(),
+      bodyPart,
+      intensity: selectedIntensity,
+    };
+    setStorageItem(LUMI_STORAGE_KEYS.painReports, [newReport, ...currentReports]);
+  };
+
+  return (
+    <div className="max-w-5xl mx-auto space-y-10">
+      <div className="text-center space-y-3">
+        <h2 className="text-4xl font-child font-bold text-rose-700">¿Dónde te duele?</h2>
+      </div>
+
+      <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-4">
+        {bodyParts.map((part) => (
+          <button
+            key={part}
+            onClick={() => {
+              setBodyPart(part);
+              setIntensity(null);
+              speak(part);
+            }}
+            className={cn(
+              'btn-child py-8 bg-white border-2',
+              bodyPart === part ? 'border-rose-300 bg-rose-50 text-rose-700' : 'border-slate-100 text-slate-800'
+            )}
+          >
+            {part}
+          </button>
+        ))}
+      </div>
+
+      {bodyPart && (
+        <div className="space-y-6">
+          <h3 className="text-3xl font-child font-bold text-center">¿Cuánto te duele?</h3>
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 max-w-3xl mx-auto">
+            {(['Poquito', 'Medio', 'Mucho'] as PainReport['intensity'][]).map((level) => (
+              <button
+                key={level}
+                onClick={() => {
+                  setIntensity(level);
+                  saveReport(level);
+                }}
+                className={cn(
+                  'btn-child py-8 border-2',
+                  intensity === level ? 'bg-rose-500 text-white border-rose-600' : 'bg-white border-slate-100 text-slate-800'
+                )}
+              >
+                {level}
+              </button>
+            ))}
+          </div>
+        </div>
+      )}
+
+      {finalPhrase && (
+        <div className="card-lumi bg-rose-50 border-rose-200 space-y-5">
+          <p className="text-3xl font-child font-bold text-rose-800 text-center">{finalPhrase}</p>
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-3">
+            {actions.map((action) => (
+              <div key={action} className="bg-white border border-rose-100 rounded-2xl px-4 py-3 text-center font-bold text-rose-700">
+                {action}
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
     </div>
   );
 };
@@ -1033,6 +1125,7 @@ export default function ChildModule() {
         <Route path="/historias" element={<StoriesModule />} />
         <Route path="/juegos" element={<GamesModule />} />
         <Route path="/aprendizaje" element={<LearningModule />} />
+        <Route path="/me-duele" element={<PainModule />} />
       </Routes>
     </div>
   );

@@ -36,6 +36,11 @@ interface ChildProfile {
   sensitivities: string[];
   helpfulStrategies: string[];
 }
+interface PainReport {
+  timestamp: string;
+  bodyPart: string;
+  intensity: 'Poquito' | 'Medio' | 'Mucho';
+}
 
 const avatarOptions = ['🦊', '🐼', '🦁', '🐯', '🐬', '🦄'];
 const readingLevelOptions = [
@@ -90,6 +95,13 @@ const ParentHome = () => {
       desc: 'Ajusta visualización, movimiento y apoyos de lectura.',
       icon: <Globe size={32} />,
       color: 'bg-slate-50 border-slate-200 text-slate-700'
+    },
+    {
+      path: 'historial-me-duele',
+      label: 'Historial "Me duele"',
+      desc: 'Consulta reportes recientes del módulo infantil.',
+      icon: <AlertCircle size={32} />,
+      color: 'bg-rose-50 border-rose-100 text-rose-700'
     },
     {
       path: 'directorio', 
@@ -371,6 +383,44 @@ const AccessibilityPage = () => {
   );
 };
 
+const PainHistoryPage = () => {
+  const reports = getStorageItem<PainReport[]>(LUMI_STORAGE_KEYS.painReports, []) ?? [];
+
+  return (
+    <div className="max-w-4xl mx-auto space-y-8">
+      <div className="space-y-2">
+        <h2 className="text-3xl font-bold text-slate-900">Historial “Me duele”</h2>
+        <p className="text-slate-500">Registro simple de reportes guardados en este dispositivo.</p>
+      </div>
+
+      <div className="card-lumi">
+        {reports.length === 0 ? (
+          <p className="text-slate-500">Aún no hay reportes.</p>
+        ) : (
+          <div className="space-y-3">
+            {reports.map((report, idx) => (
+              <div key={`${report.timestamp}-${idx}`} className="bg-white border border-slate-200 rounded-2xl p-4 grid md:grid-cols-3 gap-3">
+                <div>
+                  <p className="text-xs font-bold uppercase tracking-widest text-slate-400">Fecha</p>
+                  <p className="font-semibold text-slate-700">{new Date(report.timestamp).toLocaleString('es-MX')}</p>
+                </div>
+                <div>
+                  <p className="text-xs font-bold uppercase tracking-widest text-slate-400">Parte del cuerpo</p>
+                  <p className="font-semibold text-slate-700">{report.bodyPart}</p>
+                </div>
+                <div>
+                  <p className="text-xs font-bold uppercase tracking-widest text-slate-400">Intensidad</p>
+                  <p className="font-semibold text-slate-700">{report.intensity}</p>
+                </div>
+              </div>
+            ))}
+          </div>
+        )}
+      </div>
+    </div>
+  );
+};
+
 // --- Autism Info ---
 
 const AutismInfo = () => {
@@ -558,6 +608,7 @@ export default function ParentModule() {
         <Route path="/apoyo-casa" element={<div className="text-center py-20"><h2 className="text-3xl font-bold uppercase tracking-widest opacity-20">Contenido en construcción</h2></div>} />
         <Route path="/perfil-nino" element={<ChildProfilePage />} />
         <Route path="/accesibilidad" element={<AccessibilityPage />} />
+        <Route path="/historial-me-duele" element={<PainHistoryPage />} />
         <Route path="/directorio" element={<ClinicsDirectory />} />
         <Route path="/recursos" element={<Resources />} />
       </Routes>
