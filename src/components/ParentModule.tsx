@@ -66,6 +66,13 @@ interface TriggerLog {
   notes: string;
 }
 
+interface ProgressLog {
+  id: string;
+  achievement: string;
+  message: string;
+  timestamp: string;
+}
+
 const defaultPlanExamples: PlanChange[] = [
   { id: '1', beforeGoingTo: 'Parque', nowGoingTo: 'Casa', stillTheSame: 'Jugaremos juntos', canDoThis: 'Elegir un juego tranquilo', calmMessage: 'Estoy contigo, vamos paso a paso.' },
   { id: '2', beforeGoingTo: 'Escuela', nowGoingTo: 'Casa', stillTheSame: 'Tu rutina de comida sigue igual', canDoThis: 'Preparar tu espacio favorito', calmMessage: 'Respiramos juntos y seguimos el plan nuevo.' },
@@ -149,6 +156,13 @@ const ParentHome = () => {
       desc: 'Documenta eventos, detonantes y apoyos que funcionaron.',
       icon: <AlertCircle size={32} />,
       color: 'bg-orange-50 border-orange-100 text-orange-700'
+    },
+    {
+      path: 'resumen-logros',
+      label: 'Resumen de logros',
+      desc: 'Consulta un resumen amigable de actividad y logros.',
+      icon: <BookText size={32} />,
+      color: 'bg-yellow-50 border-yellow-100 text-yellow-700'
     },
     {
       path: 'directorio', 
@@ -667,6 +681,54 @@ const TriggerLogsPage = () => {
   );
 };
 
+const ProgressSummaryPage = () => {
+  const progressLogs = getStorageItem<ProgressLog[]>(LUMI_STORAGE_KEYS.progress, []) ?? [];
+  const emotionLogs = getStorageItem<any[]>(LUMI_STORAGE_KEYS.emotionLogs, []) ?? [];
+  const needLogs = getStorageItem<any[]>(LUMI_STORAGE_KEYS.needLogs, []) ?? [];
+  const painReports = getStorageItem<PainReport[]>(LUMI_STORAGE_KEYS.painReports, []) ?? [];
+  const planChangesState = getStorageItem<PlanChangesState>(LUMI_STORAGE_KEYS.planChanges, { items: [], activeId: null }) ?? { items: [], activeId: null };
+
+  const routinesCompleted = progressLogs.filter((log) => log.achievement === 'Completé una rutina.').length;
+  const calmZoneUses = progressLogs.filter((log) => log.achievement === 'Usé la zona de calma.').length;
+  const planChangesViewed = progressLogs.filter((log) => log.achievement === 'Intenté algo nuevo.').length;
+
+  const summary = [
+    { label: 'Rutinas completadas', value: routinesCompleted },
+    { label: 'Emociones registradas', value: emotionLogs.length },
+    { label: 'Necesidades usadas', value: needLogs.length },
+    { label: 'Veces que usó zona de calma', value: calmZoneUses },
+    { label: 'Reportes de dolor', value: painReports.length },
+    { label: 'Cambios de planes vistos', value: planChangesViewed || (planChangesState.activeId ? 1 : 0) },
+  ];
+
+  const hasData = summary.some((item) => item.value > 0);
+
+  return (
+    <div className="max-w-5xl mx-auto space-y-8">
+      <div className="space-y-2">
+        <h2 className="text-3xl font-bold text-slate-900">Resumen simple</h2>
+        <p className="text-slate-500">Vista rápida del uso reciente en este dispositivo.</p>
+      </div>
+
+      {!hasData ? (
+        <div className="card-lumi text-center py-10">
+          <p className="text-slate-700 font-semibold">Aún no hay registros de logros o actividad.</p>
+          <p className="text-slate-500 mt-2">Cuando se empiece a usar la app, aquí verás un resumen amigable.</p>
+        </div>
+      ) : (
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+          {summary.map((item) => (
+            <div key={item.label} className="card-lumi text-center">
+              <p className="text-xs uppercase tracking-widest text-slate-400 font-bold">{item.label}</p>
+              <p className="text-3xl font-bold text-slate-800 mt-2">{item.value}</p>
+            </div>
+          ))}
+        </div>
+      )}
+    </div>
+  );
+};
+
 // --- Autism Info ---
 
 const AutismInfo = () => {
@@ -857,6 +919,7 @@ export default function ParentModule() {
         <Route path="/historial-me-duele" element={<PainHistoryPage />} />
         <Route path="/cambio-planes" element={<PlanChangesPage />} />
         <Route path="/registro-detonantes" element={<TriggerLogsPage />} />
+        <Route path="/resumen-logros" element={<ProgressSummaryPage />} />
         <Route path="/directorio" element={<ClinicsDirectory />} />
         <Route path="/recursos" element={<Resources />} />
       </Routes>

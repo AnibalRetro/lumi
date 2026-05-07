@@ -60,6 +60,13 @@ interface PlanChangesState {
   activeId: string | null;
 }
 
+interface ProgressLog {
+  id: string;
+  achievement: string;
+  message: string;
+  timestamp: string;
+}
+
 // --- Helpers ---
 
 const useSpeech = () => {
@@ -101,6 +108,7 @@ const ChildHome = () => {
     { path: 'aprendizaje', label: 'Aprendizaje', icon: 'GraduationCap', color: 'bg-emerald-100 text-emerald-600 border-emerald-200' },
     { path: 'me-duele', label: 'Me duele', icon: 'Heart', color: 'bg-rose-100 text-rose-600 border-rose-200' },
     { path: 'cambio-planes', label: 'Cambio de planes', icon: 'RefreshCcw', color: 'bg-indigo-100 text-indigo-700 border-indigo-200' },
+    { path: 'mis-logros', label: 'Mis logros', icon: 'Trophy', color: 'bg-amber-100 text-amber-700 border-amber-200' },
   ];
 
   return (
@@ -266,6 +274,60 @@ const PlanChangeModule = () => {
         {supportButtons.map((button) => (
           <button key={button} onClick={() => speak(button)} className="btn-child py-4 bg-white border-slate-100 text-slate-700">
             {button}
+          </button>
+        ))}
+      </div>
+    </div>
+  );
+};
+
+const AchievementsModule = () => {
+  const achievements = [
+    'Completé una rutina.',
+    'Pedí ayuda.',
+    'Dije cómo me siento.',
+    'Usé la zona de calma.',
+    'Practiqué una actividad.',
+    'Terminé una historia.',
+    'Intenté algo nuevo.',
+  ];
+  const positiveMessages = ['Buen intento.', 'Lo lograste.', 'Gracias por intentarlo.', 'Puedes volver a intentarlo.'];
+  const [selectedMessage, setSelectedMessage] = useState<string | null>(null);
+
+  const addAchievement = (achievement: string) => {
+    const message = positiveMessages[Math.floor(Math.random() * positiveMessages.length)];
+    setSelectedMessage(message);
+    const current = getStorageItem<ProgressLog[]>(LUMI_STORAGE_KEYS.progress, []) ?? [];
+    const nextLog: ProgressLog = {
+      id: crypto.randomUUID(),
+      achievement,
+      message,
+      timestamp: new Date().toISOString(),
+    };
+    setStorageItem(LUMI_STORAGE_KEYS.progress, [nextLog, ...current]);
+  };
+
+  return (
+    <div className="max-w-5xl mx-auto space-y-8">
+      <div className="text-center space-y-2">
+        <h2 className="text-4xl font-child font-bold text-amber-800">Mis logros</h2>
+        <p className="text-slate-500">Cada paso cuenta. Elige tu logro de hoy.</p>
+      </div>
+
+      {selectedMessage && (
+        <div className="card-lumi bg-amber-50 border-amber-200 text-center">
+          <p className="text-3xl font-child font-bold text-amber-800">{selectedMessage}</p>
+        </div>
+      )}
+
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+        {achievements.map((item) => (
+          <button
+            key={item}
+            onClick={() => addAchievement(item)}
+            className="btn-child bg-white border-slate-100 text-slate-800 hover:border-amber-300 hover:bg-amber-50 text-left"
+          >
+            {item}
           </button>
         ))}
       </div>
@@ -1366,6 +1428,7 @@ export default function ChildModule() {
         <Route path="/aprendizaje" element={<LearningModule />} />
         <Route path="/me-duele" element={<PainModule />} />
         <Route path="/cambio-planes" element={<PlanChangeModule />} />
+        <Route path="/mis-logros" element={<AchievementsModule />} />
       </Routes>
     </div>
   );
