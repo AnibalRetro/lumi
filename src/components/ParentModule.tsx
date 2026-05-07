@@ -3,7 +3,7 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import { useState } from 'react';
+import { useState, useContext } from 'react';
 import { Routes, Route, Link, useNavigate } from 'react-router-dom';
 import { motion } from 'motion/react';
 import { 
@@ -19,10 +19,90 @@ import {
   ChevronRight,
   ChevronLeft,
   Calendar,
-  ArrowRightLeft
+  ArrowRightLeft,
+  RefreshCcw
 } from 'lucide-react';
 import { cn } from '../lib/utils';
 import { clinics } from '../data/mockData';
+import { getStorageItem, setStorageItem, LUMI_STORAGE_KEYS } from '../utils/storage';
+import { SettingsContext } from '../App';
+
+interface ChildProfile {
+  avatar: string;
+  nickname: string;
+  age: string;
+  preferredTheme: string;
+  readingLevel: string;
+  supportStyle: string;
+  sensitivities: string[];
+  helpfulStrategies: string[];
+}
+interface PainReport {
+  timestamp: string;
+  bodyPart: string;
+  intensity: 'Poquito' | 'Medio' | 'Mucho';
+}
+
+interface PlanChange {
+  id: string;
+  beforeGoingTo: string;
+  nowGoingTo: string;
+  stillTheSame: string;
+  canDoThis: string;
+  calmMessage: string;
+}
+
+interface PlanChangesState {
+  items: PlanChange[];
+  activeId: string | null;
+}
+
+interface TriggerLog {
+  id: string;
+  date: string;
+  event: string;
+  trigger: string;
+  helpfulStrategy: string;
+  notes: string;
+}
+
+interface ProgressLog {
+  id: string;
+  achievement: string;
+  message: string;
+  timestamp: string;
+}
+
+const defaultPlanExamples: PlanChange[] = [
+  { id: '1', beforeGoingTo: 'Parque', nowGoingTo: 'Casa', stillTheSame: 'Jugaremos juntos', canDoThis: 'Elegir un juego tranquilo', calmMessage: 'Estoy contigo, vamos paso a paso.' },
+  { id: '2', beforeGoingTo: 'Escuela', nowGoingTo: 'Casa', stillTheSame: 'Tu rutina de comida sigue igual', canDoThis: 'Preparar tu espacio favorito', calmMessage: 'Respiramos juntos y seguimos el plan nuevo.' },
+  { id: '3', beforeGoingTo: 'Ruta normal', nowGoingTo: 'Ruta alterna', stillTheSame: 'Llegaremos al mismo lugar', canDoThis: 'Escuchar música tranquila', calmMessage: 'El cambio está bien, estamos seguros.' },
+  { id: '4', beforeGoingTo: 'Tarde tranquila', nowGoingTo: 'Recibir visita', stillTheSame: 'Tu habitación sigue disponible', canDoThis: 'Tomar descansos cortos', calmMessage: 'Puedes pedir una pausa cuando quieras.' },
+  { id: '5', beforeGoingTo: 'Consulta puntual', nowGoingTo: 'Esperar un poco más', stillTheSame: 'Seguimos con el doctor', canDoThis: 'Tomar agua y respirar', calmMessage: 'Estamos haciendo un gran trabajo esperando.' },
+  { id: '6', beforeGoingTo: 'Dormir a las 8:00', nowGoingTo: 'Dormir a las 8:30', stillTheSame: 'Tu cuento antes de dormir sigue', canDoThis: 'Usar luz tenue y respirar', calmMessage: 'Pronto será hora de descansar.' },
+];
+
+const avatarOptions = ['🦊', '🐼', '🦁', '🐯', '🐬', '🦄'];
+const readingLevelOptions = [
+  'No lee todavía',
+  'Reconoce letras',
+  'Lee palabras cortas',
+  'Lee frases simples',
+];
+const supportStyleOptions = ['Imágenes', 'Texto', 'Audio', 'Imágenes + texto', 'Imágenes + audio'];
+const sensitivityOptions = ['Ruido', 'Luz', 'Texturas', 'Multitudes', 'Cambios de rutina', 'Contacto físico', 'Olores'];
+const strategyOptions = ['Silencio', 'Audífonos', 'Respirar', 'Tomar agua', 'Descansar', 'Abrazo', 'Estar solo'];
+
+const defaultChildProfile: ChildProfile = {
+  avatar: avatarOptions[0],
+  nickname: '',
+  age: '',
+  preferredTheme: '',
+  readingLevel: readingLevelOptions[0],
+  supportStyle: supportStyleOptions[0],
+  sensitivities: [],
+  helpfulStrategies: [],
+};
 
 // --- Parent Home ---
 
@@ -43,6 +123,48 @@ const ParentHome = () => {
       color: 'bg-emerald-50 border-emerald-100 text-emerald-700'
     },
     { 
+      path: 'perfil-nino',
+      label: 'Perfil del niño',
+      desc: 'Configura preferencias básicas para personalizar su experiencia.',
+      icon: <HeartHandshake size={32} />,
+      color: 'bg-violet-50 border-violet-100 text-violet-700'
+    },
+    {
+      path: 'accesibilidad',
+      label: 'Accesibilidad',
+      desc: 'Ajusta visualización, movimiento y apoyos de lectura.',
+      icon: <Globe size={32} />,
+      color: 'bg-slate-50 border-slate-200 text-slate-700'
+    },
+    {
+      path: 'historial-me-duele',
+      label: 'Historial "Me duele"',
+      desc: 'Consulta reportes recientes del módulo infantil.',
+      icon: <AlertCircle size={32} />,
+      color: 'bg-rose-50 border-rose-100 text-rose-700'
+    },
+    {
+      path: 'cambio-planes',
+      label: 'Cambio de planes',
+      desc: 'Crea y activa mensajes para transiciones inesperadas.',
+      icon: <RefreshCcw size={32} />,
+      color: 'bg-indigo-50 border-indigo-100 text-indigo-700'
+    },
+    {
+      path: 'registro-detonantes',
+      label: 'Registro de detonantes',
+      desc: 'Documenta eventos, detonantes y apoyos que funcionaron.',
+      icon: <AlertCircle size={32} />,
+      color: 'bg-orange-50 border-orange-100 text-orange-700'
+    },
+    {
+      path: 'resumen-logros',
+      label: 'Resumen de logros',
+      desc: 'Consulta un resumen amigable de actividad y logros.',
+      icon: <BookText size={32} />,
+      color: 'bg-yellow-50 border-yellow-100 text-yellow-700'
+    },
+    {
       path: 'directorio', 
       label: 'Directorio México', 
       desc: 'Clínicas, asociaciones y centros especializados.',
@@ -95,6 +217,514 @@ const ParentHome = () => {
         </div>
         <div className="px-6 py-2 bg-white/10 rounded-full text-sm font-bold uppercase tracking-widest border border-white/20">Próximamente</div>
       </div>
+    </div>
+  );
+};
+
+const ChildProfilePage = () => {
+  const [profile, setProfile] = useState<ChildProfile>(() => {
+    return getStorageItem<ChildProfile>(LUMI_STORAGE_KEYS.childProfile, defaultChildProfile) ?? defaultChildProfile;
+  });
+  const [saved, setSaved] = useState(false);
+
+  const handleSave = () => {
+    setStorageItem(LUMI_STORAGE_KEYS.childProfile, profile);
+    setSaved(true);
+    setTimeout(() => setSaved(false), 1800);
+  };
+
+  const toggleArrayValue = (key: 'sensitivities' | 'helpfulStrategies', value: string) => {
+    setProfile((prev) => {
+      const hasValue = prev[key].includes(value);
+      return {
+        ...prev,
+        [key]: hasValue ? prev[key].filter((item) => item !== value) : [...prev[key], value],
+      };
+    });
+  };
+
+  return (
+    <div className="max-w-4xl mx-auto space-y-8">
+      <div className="space-y-2">
+        <h2 className="text-3xl font-bold text-slate-900">Perfil del niño</h2>
+        <p className="text-slate-500">Configura datos básicos y preferencias de apoyo.</p>
+      </div>
+
+      <div className="card-lumi space-y-8">
+        <section className="space-y-3">
+          <p className="text-sm font-bold uppercase tracking-widest text-slate-400">Avatar animado</p>
+          <div className="flex flex-wrap gap-3">
+            {avatarOptions.map((avatar) => (
+              <button
+                key={avatar}
+                type="button"
+                onClick={() => setProfile((prev) => ({ ...prev, avatar }))}
+                className={cn(
+                  'w-14 h-14 rounded-2xl border-2 text-3xl bg-white transition-all hover:scale-105',
+                  profile.avatar === avatar ? 'border-lumi-olive shadow-sm' : 'border-slate-200'
+                )}
+              >
+                {avatar}
+              </button>
+            ))}
+          </div>
+        </section>
+
+        <section className="grid md:grid-cols-2 gap-4">
+          <label className="space-y-2">
+            <span className="text-sm font-semibold text-slate-700">Nombre o apodo</span>
+            <input
+              value={profile.nickname}
+              onChange={(e) => setProfile((prev) => ({ ...prev, nickname: e.target.value }))}
+              placeholder="Ej. Alex"
+              className="w-full bg-white border border-slate-200 rounded-2xl px-4 py-3 outline-none focus:ring-2 focus:ring-lumi-olive"
+            />
+          </label>
+          <label className="space-y-2">
+            <span className="text-sm font-semibold text-slate-700">Edad</span>
+            <input
+              value={profile.age}
+              onChange={(e) => setProfile((prev) => ({ ...prev, age: e.target.value }))}
+              placeholder="Ej. 7"
+              className="w-full bg-white border border-slate-200 rounded-2xl px-4 py-3 outline-none focus:ring-2 focus:ring-lumi-olive"
+            />
+          </label>
+        </section>
+
+        <label className="space-y-2 block">
+          <span className="text-sm font-semibold text-slate-700">Color o tema preferido</span>
+          <input
+            value={profile.preferredTheme}
+            onChange={(e) => setProfile((prev) => ({ ...prev, preferredTheme: e.target.value }))}
+            placeholder="Ej. Azul, naturaleza, espacio..."
+            className="w-full bg-white border border-slate-200 rounded-2xl px-4 py-3 outline-none focus:ring-2 focus:ring-lumi-olive"
+          />
+        </label>
+
+        <section className="grid md:grid-cols-2 gap-4">
+          <label className="space-y-2">
+            <span className="text-sm font-semibold text-slate-700">Nivel de lectura</span>
+            <select
+              value={profile.readingLevel}
+              onChange={(e) => setProfile((prev) => ({ ...prev, readingLevel: e.target.value }))}
+              className="w-full bg-white border border-slate-200 rounded-2xl px-4 py-3 outline-none focus:ring-2 focus:ring-lumi-olive"
+            >
+              {readingLevelOptions.map((option) => <option key={option}>{option}</option>)}
+            </select>
+          </label>
+          <label className="space-y-2">
+            <span className="text-sm font-semibold text-slate-700">Forma de apoyo preferida</span>
+            <select
+              value={profile.supportStyle}
+              onChange={(e) => setProfile((prev) => ({ ...prev, supportStyle: e.target.value }))}
+              className="w-full bg-white border border-slate-200 rounded-2xl px-4 py-3 outline-none focus:ring-2 focus:ring-lumi-olive"
+            >
+              {supportStyleOptions.map((option) => <option key={option}>{option}</option>)}
+            </select>
+          </label>
+        </section>
+
+        <section className="space-y-3">
+          <p className="text-sm font-bold uppercase tracking-widest text-slate-400">Sensibilidades comunes</p>
+          <div className="flex flex-wrap gap-2">
+            {sensitivityOptions.map((item) => (
+              <button
+                key={item}
+                type="button"
+                onClick={() => toggleArrayValue('sensitivities', item)}
+                className={cn(
+                  'px-4 py-2 rounded-full border text-sm font-medium transition-all',
+                  profile.sensitivities.includes(item)
+                    ? 'bg-amber-100 border-amber-300 text-amber-800'
+                    : 'bg-white border-slate-200 text-slate-600'
+                )}
+              >
+                {item}
+              </button>
+            ))}
+          </div>
+        </section>
+
+        <section className="space-y-3">
+          <p className="text-sm font-bold uppercase tracking-widest text-slate-400">Estrategias que ayudan</p>
+          <div className="flex flex-wrap gap-2">
+            {strategyOptions.map((item) => (
+              <button
+                key={item}
+                type="button"
+                onClick={() => toggleArrayValue('helpfulStrategies', item)}
+                className={cn(
+                  'px-4 py-2 rounded-full border text-sm font-medium transition-all',
+                  profile.helpfulStrategies.includes(item)
+                    ? 'bg-emerald-100 border-emerald-300 text-emerald-800'
+                    : 'bg-white border-slate-200 text-slate-600'
+                )}
+              >
+                {item}
+              </button>
+            ))}
+          </div>
+        </section>
+
+        <div className="flex items-center gap-4">
+          <button
+            type="button"
+            onClick={handleSave}
+            className="bg-slate-900 text-white px-6 py-3 rounded-2xl font-bold hover:bg-lumi-olive transition-all"
+          >
+            Guardar perfil
+          </button>
+          {saved && <span className="text-sm font-semibold text-emerald-700">Perfil guardado en este dispositivo.</span>}
+        </div>
+      </div>
+    </div>
+  );
+};
+
+const AccessibilityPage = () => {
+  const { settings, updateSettings } = useContext(SettingsContext);
+
+  return (
+    <div className="max-w-4xl mx-auto space-y-8">
+      <div className="space-y-2">
+        <h2 className="text-3xl font-bold text-slate-900">Accesibilidad</h2>
+        <p className="text-slate-500">Personaliza la experiencia visual y de apoyo.</p>
+      </div>
+
+      <div className="card-lumi space-y-8">
+        <section className="grid md:grid-cols-2 gap-4">
+          <button type="button" onClick={() => updateSettings({ lowStimulus: !settings.lowStimulus })} className="text-left bg-white border border-slate-200 rounded-2xl p-4">
+            <p className="font-bold">Modo bajo estímulo</p>
+            <p className="text-sm text-slate-500 mt-1">{settings.lowStimulus ? 'Activado' : 'Desactivado'}</p>
+          </button>
+          <button type="button" onClick={() => updateSettings({ soundEnabled: !settings.soundEnabled })} className="text-left bg-white border border-slate-200 rounded-2xl p-4">
+            <p className="font-bold">Sonidos</p>
+            <p className="text-sm text-slate-500 mt-1">{settings.soundEnabled ? 'Activados' : 'Desactivados'}</p>
+          </button>
+          <button type="button" onClick={() => updateSettings({ voiceEnabled: !settings.voiceEnabled })} className="text-left bg-white border border-slate-200 rounded-2xl p-4">
+            <p className="font-bold">Voz</p>
+            <p className="text-sm text-slate-500 mt-1">{settings.voiceEnabled ? 'Activada' : 'Desactivada'}</p>
+          </button>
+          <button type="button" onClick={() => updateSettings({ showTextWithImages: !settings.showTextWithImages })} className="text-left bg-white border border-slate-200 rounded-2xl p-4">
+            <p className="font-bold">Mostrar texto junto a imágenes</p>
+            <p className="text-sm text-slate-500 mt-1">{settings.showTextWithImages ? 'Sí' : 'No'}</p>
+          </button>
+        </section>
+
+        <section className="grid md:grid-cols-3 gap-4">
+          <label className="space-y-2">
+            <span className="text-sm font-semibold text-slate-700">Tamaño de texto</span>
+            <select value={settings.fontSize} onChange={(e) => updateSettings({ fontSize: e.target.value as 'normal' | 'large' | 'xlarge' })} className="w-full bg-white border border-slate-200 rounded-2xl px-4 py-3 outline-none">
+              <option value="normal">Normal</option>
+              <option value="large">Grande</option>
+              <option value="xlarge">Muy grande</option>
+            </select>
+          </label>
+          <label className="space-y-2">
+            <span className="text-sm font-semibold text-slate-700">Movimiento</span>
+            <select value={settings.motion} onChange={(e) => updateSettings({ motion: e.target.value as 'normal' | 'reducido' })} className="w-full bg-white border border-slate-200 rounded-2xl px-4 py-3 outline-none">
+              <option value="normal">Normal</option>
+              <option value="reducido">Reducido</option>
+            </select>
+          </label>
+          <label className="space-y-2">
+            <span className="text-sm font-semibold text-slate-700">Contraste</span>
+            <select value={settings.contrast} onChange={(e) => updateSettings({ contrast: e.target.value as 'suave' | 'alto' })} className="w-full bg-white border border-slate-200 rounded-2xl px-4 py-3 outline-none">
+              <option value="suave">Suave</option>
+              <option value="alto">Alto</option>
+            </select>
+          </label>
+        </section>
+
+        <div className="text-sm text-slate-500 bg-slate-50 border border-slate-200 rounded-2xl p-4">
+          Estos ajustes se guardan automáticamente en este dispositivo.
+        </div>
+      </div>
+    </div>
+  );
+};
+
+const PainHistoryPage = () => {
+  const reports = getStorageItem<PainReport[]>(LUMI_STORAGE_KEYS.painReports, []) ?? [];
+
+  return (
+    <div className="max-w-4xl mx-auto space-y-8">
+      <div className="space-y-2">
+        <h2 className="text-3xl font-bold text-slate-900">Historial “Me duele”</h2>
+        <p className="text-slate-500">Registro simple de reportes guardados en este dispositivo.</p>
+      </div>
+
+      <div className="card-lumi">
+        {reports.length === 0 ? (
+          <p className="text-slate-500">Aún no hay reportes.</p>
+        ) : (
+          <div className="space-y-3">
+            {reports.map((report, idx) => (
+              <div key={`${report.timestamp}-${idx}`} className="bg-white border border-slate-200 rounded-2xl p-4 grid md:grid-cols-3 gap-3">
+                <div>
+                  <p className="text-xs font-bold uppercase tracking-widest text-slate-400">Fecha</p>
+                  <p className="font-semibold text-slate-700">{new Date(report.timestamp).toLocaleString('es-MX')}</p>
+                </div>
+                <div>
+                  <p className="text-xs font-bold uppercase tracking-widest text-slate-400">Parte del cuerpo</p>
+                  <p className="font-semibold text-slate-700">{report.bodyPart}</p>
+                </div>
+                <div>
+                  <p className="text-xs font-bold uppercase tracking-widest text-slate-400">Intensidad</p>
+                  <p className="font-semibold text-slate-700">{report.intensity}</p>
+                </div>
+              </div>
+            ))}
+          </div>
+        )}
+      </div>
+    </div>
+  );
+};
+
+const PlanChangesPage = () => {
+  const [state, setState] = useState<PlanChangesState>(() => {
+    return getStorageItem<PlanChangesState>(LUMI_STORAGE_KEYS.planChanges, { items: defaultPlanExamples, activeId: defaultPlanExamples[0].id }) ?? { items: defaultPlanExamples, activeId: defaultPlanExamples[0].id };
+  });
+  const [form, setForm] = useState<Omit<PlanChange, 'id'>>({
+    beforeGoingTo: '',
+    nowGoingTo: '',
+    stillTheSame: '',
+    canDoThis: '',
+    calmMessage: '',
+  });
+
+  const persistState = (nextState: PlanChangesState) => {
+    setState(nextState);
+    setStorageItem(LUMI_STORAGE_KEYS.planChanges, nextState);
+  };
+
+  const addChange = () => {
+    if (!form.beforeGoingTo || !form.nowGoingTo) return;
+    const newItem: PlanChange = { ...form, id: crypto.randomUUID() };
+    const nextState: PlanChangesState = {
+      items: [newItem, ...state.items],
+      activeId: state.activeId ?? newItem.id,
+    };
+    persistState(nextState);
+    setForm({ beforeGoingTo: '', nowGoingTo: '', stillTheSame: '', canDoThis: '', calmMessage: '' });
+  };
+
+  return (
+    <div className="max-w-5xl mx-auto space-y-8">
+      <div className="space-y-2">
+        <h2 className="text-3xl font-bold text-slate-900">Cambio de planes</h2>
+        <p className="text-slate-500">Crea mensajes claros y activa uno para modo niño.</p>
+      </div>
+
+      <div className="card-lumi space-y-4">
+        <div className="grid md:grid-cols-2 gap-4">
+          <input value={form.beforeGoingTo} onChange={(e) => setForm((p) => ({ ...p, beforeGoingTo: e.target.value }))} placeholder="Antes íbamos a" className="w-full bg-white border border-slate-200 rounded-2xl px-4 py-3" />
+          <input value={form.nowGoingTo} onChange={(e) => setForm((p) => ({ ...p, nowGoingTo: e.target.value }))} placeholder="Ahora vamos a" className="w-full bg-white border border-slate-200 rounded-2xl px-4 py-3" />
+          <input value={form.stillTheSame} onChange={(e) => setForm((p) => ({ ...p, stillTheSame: e.target.value }))} placeholder="Esto sigue igual" className="w-full bg-white border border-slate-200 rounded-2xl px-4 py-3" />
+          <input value={form.canDoThis} onChange={(e) => setForm((p) => ({ ...p, canDoThis: e.target.value }))} placeholder="Puedes hacer esto" className="w-full bg-white border border-slate-200 rounded-2xl px-4 py-3" />
+        </div>
+        <textarea value={form.calmMessage} onChange={(e) => setForm((p) => ({ ...p, calmMessage: e.target.value }))} placeholder="Mensaje de calma" className="w-full bg-white border border-slate-200 rounded-2xl px-4 py-3 min-h-24" />
+        <button type="button" onClick={addChange} className="bg-slate-900 text-white px-6 py-3 rounded-2xl font-bold">
+          Guardar cambio
+        </button>
+      </div>
+
+      <div className="space-y-3">
+        {state.items.map((item) => (
+          <div key={item.id} className="card-lumi border-slate-200">
+            <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
+              <div className="space-y-1">
+                <p><strong>Antes:</strong> {item.beforeGoingTo}</p>
+                <p><strong>Ahora:</strong> {item.nowGoingTo}</p>
+              </div>
+              <button
+                type="button"
+                onClick={() => persistState({ ...state, activeId: item.id })}
+                className={cn(
+                  'px-4 py-2 rounded-full text-sm font-bold border',
+                  state.activeId === item.id ? 'bg-emerald-100 border-emerald-300 text-emerald-700' : 'bg-white border-slate-200 text-slate-600'
+                )}
+              >
+                {state.activeId === item.id ? 'Cambio activo' : 'Activar este cambio'}
+              </button>
+            </div>
+          </div>
+        ))}
+      </div>
+    </div>
+  );
+};
+
+const TriggerLogsPage = () => {
+  const [logs, setLogs] = useState<TriggerLog[]>(() => getStorageItem<TriggerLog[]>(LUMI_STORAGE_KEYS.triggerLogs, []) ?? []);
+  const [form, setForm] = useState({
+    date: new Date().toISOString().slice(0, 10),
+    event: 'Llanto',
+    trigger: 'Ruido',
+    helpfulStrategy: 'Silencio',
+    notes: '',
+  });
+
+  const eventOptions = ['Llanto', 'Gritos', 'Se tapó los oídos', 'Se aisló', 'Se frustró', 'No quiso continuar', 'Otro'];
+  const triggerOptions = ['Ruido', 'Hambre', 'Sueño', 'Cambio de rutina', 'Mucha gente', 'Luz intensa', 'Frustración', 'Dolor', 'Espera larga', 'No entendió la instrucción'];
+  const strategyOptions = ['Silencio', 'Descanso', 'Agua', 'Abrazo', 'Estar solo', 'Audífonos', 'Respiración', 'Objeto favorito', 'Cambiar actividad'];
+
+  const persistLogs = (nextLogs: TriggerLog[]) => {
+    setLogs(nextLogs);
+    setStorageItem(LUMI_STORAGE_KEYS.triggerLogs, nextLogs);
+  };
+
+  const addLog = () => {
+    const next: TriggerLog = {
+      id: crypto.randomUUID(),
+      date: form.date,
+      event: form.event,
+      trigger: form.trigger,
+      helpfulStrategy: form.helpfulStrategy,
+      notes: form.notes.trim(),
+    };
+    persistLogs([next, ...logs]);
+    setForm((prev) => ({ ...prev, notes: '' }));
+  };
+
+  const countBy = (items: TriggerLog[], key: 'trigger' | 'helpfulStrategy') => {
+    const map = new Map<string, number>();
+    items.forEach((item) => map.set(item[key], (map.get(item[key]) ?? 0) + 1));
+    return Array.from(map.entries()).sort((a, b) => b[1] - a[1])[0]?.[0] ?? 'N/A';
+  };
+
+  const topTrigger = countBy(logs, 'trigger');
+  const topStrategy = countBy(logs, 'helpfulStrategy');
+
+  return (
+    <div className="max-w-5xl mx-auto space-y-8">
+      <div className="space-y-2">
+        <h2 className="text-3xl font-bold text-slate-900">Registro de detonantes</h2>
+        <p className="text-slate-500">Anota situaciones para identificar qué apoyos funcionaron mejor.</p>
+      </div>
+
+      <div className="card-lumi space-y-4">
+        <div className="grid md:grid-cols-2 gap-4">
+          <label className="space-y-2">
+            <span className="text-sm font-semibold text-slate-700">Fecha</span>
+            <input type="date" value={form.date} onChange={(e) => setForm((p) => ({ ...p, date: e.target.value }))} className="w-full bg-white border border-slate-200 rounded-2xl px-4 py-3" />
+          </label>
+          <label className="space-y-2">
+            <span className="text-sm font-semibold text-slate-700">Qué ocurrió</span>
+            <select value={form.event} onChange={(e) => setForm((p) => ({ ...p, event: e.target.value }))} className="w-full bg-white border border-slate-200 rounded-2xl px-4 py-3">
+              {eventOptions.map((o) => <option key={o}>{o}</option>)}
+            </select>
+          </label>
+          <label className="space-y-2">
+            <span className="text-sm font-semibold text-slate-700">Qué pasó antes</span>
+            <select value={form.trigger} onChange={(e) => setForm((p) => ({ ...p, trigger: e.target.value }))} className="w-full bg-white border border-slate-200 rounded-2xl px-4 py-3">
+              {triggerOptions.map((o) => <option key={o}>{o}</option>)}
+            </select>
+          </label>
+          <label className="space-y-2">
+            <span className="text-sm font-semibold text-slate-700">Qué ayudó</span>
+            <select value={form.helpfulStrategy} onChange={(e) => setForm((p) => ({ ...p, helpfulStrategy: e.target.value }))} className="w-full bg-white border border-slate-200 rounded-2xl px-4 py-3">
+              {strategyOptions.map((o) => <option key={o}>{o}</option>)}
+            </select>
+          </label>
+        </div>
+
+        <label className="space-y-2 block">
+          <span className="text-sm font-semibold text-slate-700">Notas opcionales</span>
+          <textarea value={form.notes} onChange={(e) => setForm((p) => ({ ...p, notes: e.target.value }))} className="w-full bg-white border border-slate-200 rounded-2xl px-4 py-3 min-h-24" />
+        </label>
+
+        <button type="button" onClick={addLog} className="bg-slate-900 text-white px-6 py-3 rounded-2xl font-bold">
+          Guardar registro
+        </button>
+      </div>
+
+      <div className="grid md:grid-cols-3 gap-4">
+        <div className="card-lumi text-center">
+          <p className="text-xs uppercase tracking-widest text-slate-400 font-bold">Total de registros</p>
+          <p className="text-3xl font-bold text-slate-800 mt-2">{logs.length}</p>
+        </div>
+        <div className="card-lumi text-center">
+          <p className="text-xs uppercase tracking-widest text-slate-400 font-bold">Detonante más frecuente</p>
+          <p className="text-xl font-bold text-slate-800 mt-2">{topTrigger}</p>
+        </div>
+        <div className="card-lumi text-center">
+          <p className="text-xs uppercase tracking-widest text-slate-400 font-bold">Estrategia más usada</p>
+          <p className="text-xl font-bold text-slate-800 mt-2">{topStrategy}</p>
+        </div>
+      </div>
+
+      <div className="card-lumi space-y-3">
+        <h3 className="text-xl font-bold">Historial</h3>
+        {logs.length === 0 ? (
+          <p className="text-slate-500">Aún no hay registros.</p>
+        ) : (
+          <div className="space-y-3">
+            {logs.map((log) => (
+              <div key={log.id} className="bg-white border border-slate-200 rounded-2xl p-4 grid md:grid-cols-4 gap-3 text-sm">
+                <div><p className="text-slate-400 text-xs uppercase font-bold">Fecha</p><p>{log.date}</p></div>
+                <div><p className="text-slate-400 text-xs uppercase font-bold">Ocurrió</p><p>{log.event}</p></div>
+                <div><p className="text-slate-400 text-xs uppercase font-bold">Detonante</p><p>{log.trigger}</p></div>
+                <div><p className="text-slate-400 text-xs uppercase font-bold">Qué ayudó</p><p>{log.helpfulStrategy}</p></div>
+                {log.notes && <div className="md:col-span-4"><p className="text-slate-400 text-xs uppercase font-bold">Notas</p><p>{log.notes}</p></div>}
+              </div>
+            ))}
+          </div>
+        )}
+      </div>
+
+      <div className="bg-lumi-soft-yellow border border-amber-200 rounded-2xl p-5 text-amber-900 text-sm">
+        Este registro puede ayudarte a observar patrones y compartir información útil con profesionales, maestros o cuidadores. No representa un diagnóstico.
+      </div>
+    </div>
+  );
+};
+
+const ProgressSummaryPage = () => {
+  const progressLogs = getStorageItem<ProgressLog[]>(LUMI_STORAGE_KEYS.progress, []) ?? [];
+  const emotionLogs = getStorageItem<any[]>(LUMI_STORAGE_KEYS.emotionLogs, []) ?? [];
+  const needLogs = getStorageItem<any[]>(LUMI_STORAGE_KEYS.needLogs, []) ?? [];
+  const painReports = getStorageItem<PainReport[]>(LUMI_STORAGE_KEYS.painReports, []) ?? [];
+  const planChangesState = getStorageItem<PlanChangesState>(LUMI_STORAGE_KEYS.planChanges, { items: [], activeId: null }) ?? { items: [], activeId: null };
+
+  const routinesCompleted = progressLogs.filter((log) => log.achievement === 'Completé una rutina.').length;
+  const calmZoneUses = progressLogs.filter((log) => log.achievement === 'Usé la zona de calma.').length;
+  const planChangesViewed = progressLogs.filter((log) => log.achievement === 'Intenté algo nuevo.').length;
+
+  const summary = [
+    { label: 'Rutinas completadas', value: routinesCompleted },
+    { label: 'Emociones registradas', value: emotionLogs.length },
+    { label: 'Necesidades usadas', value: needLogs.length },
+    { label: 'Veces que usó zona de calma', value: calmZoneUses },
+    { label: 'Reportes de dolor', value: painReports.length },
+    { label: 'Cambios de planes vistos', value: planChangesViewed || (planChangesState.activeId ? 1 : 0) },
+  ];
+
+  const hasData = summary.some((item) => item.value > 0);
+
+  return (
+    <div className="max-w-5xl mx-auto space-y-8">
+      <div className="space-y-2">
+        <h2 className="text-3xl font-bold text-slate-900">Resumen simple</h2>
+        <p className="text-slate-500">Vista rápida del uso reciente en este dispositivo.</p>
+      </div>
+
+      {!hasData ? (
+        <div className="card-lumi text-center py-10">
+          <p className="text-slate-700 font-semibold">Aún no hay registros de logros o actividad.</p>
+          <p className="text-slate-500 mt-2">Cuando se empiece a usar la app, aquí verás un resumen amigable.</p>
+        </div>
+      ) : (
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+          {summary.map((item) => (
+            <div key={item.label} className="card-lumi text-center">
+              <p className="text-xs uppercase tracking-widest text-slate-400 font-bold">{item.label}</p>
+              <p className="text-3xl font-bold text-slate-800 mt-2">{item.value}</p>
+            </div>
+          ))}
+        </div>
+      )}
     </div>
   );
 };
@@ -284,6 +914,12 @@ export default function ParentModule() {
         <Route path="/" element={<ParentHome />} />
         <Route path="/autismo" element={<AutismInfo />} />
         <Route path="/apoyo-casa" element={<div className="text-center py-20"><h2 className="text-3xl font-bold uppercase tracking-widest opacity-20">Contenido en construcción</h2></div>} />
+        <Route path="/perfil-nino" element={<ChildProfilePage />} />
+        <Route path="/accesibilidad" element={<AccessibilityPage />} />
+        <Route path="/historial-me-duele" element={<PainHistoryPage />} />
+        <Route path="/cambio-planes" element={<PlanChangesPage />} />
+        <Route path="/registro-detonantes" element={<TriggerLogsPage />} />
+        <Route path="/resumen-logros" element={<ProgressSummaryPage />} />
         <Route path="/directorio" element={<ClinicsDirectory />} />
         <Route path="/recursos" element={<Resources />} />
       </Routes>

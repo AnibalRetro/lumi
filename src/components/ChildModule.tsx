@@ -32,8 +32,40 @@ import {
 } from 'lucide-react';
 import * as Icons from 'lucide-react';
 import { cn } from '../lib/utils';
-import { initialRoutines, emotions, needs, socialStories, gameScenarios, emotionChallenges, routineSequences, RoutineItem } from '../data/mockData';
+import { initialRoutines, emotions, socialStories, gameScenarios, emotionChallenges, routineSequences, RoutineItem } from '../data/mockData';
 import { SettingsContext } from '../App';
+import { getStorageItem, setStorageItem, LUMI_STORAGE_KEYS } from '../utils/storage';
+
+interface ChildProfile {
+  nickname?: string;
+}
+
+interface PainReport {
+  timestamp: string;
+  bodyPart: string;
+  intensity: 'Poquito' | 'Medio' | 'Mucho';
+}
+
+interface PlanChange {
+  id: string;
+  beforeGoingTo: string;
+  nowGoingTo: string;
+  stillTheSame: string;
+  canDoThis: string;
+  calmMessage: string;
+}
+
+interface PlanChangesState {
+  items: PlanChange[];
+  activeId: string | null;
+}
+
+interface ProgressLog {
+  id: string;
+  achievement: string;
+  message: string;
+  timestamp: string;
+}
 
 // --- Helpers ---
 
@@ -63,6 +95,8 @@ const IconComponent = ({ name, size = 24 }: { name: string; size?: number }) => 
 
 const ChildHome = () => {
   const { speak } = useSpeech();
+  const childProfile = getStorageItem<ChildProfile>(LUMI_STORAGE_KEYS.childProfile);
+  const childName = childProfile?.nickname?.trim();
   const menuItems = [
     { path: 'rutina', label: 'Mi Rutina', icon: 'Calendar', color: 'bg-orange-100 text-orange-600 border-orange-200' },
     { path: 'primero-despues', label: 'Primero / Después', icon: 'ArrowRightLeft', color: 'bg-blue-100 text-blue-600 border-blue-200' },
@@ -72,12 +106,16 @@ const ChildHome = () => {
     { path: 'historias', label: 'Historias', icon: 'BookOpen', color: 'bg-pink-100 text-pink-600 border-pink-200' },
     { path: 'juegos', label: 'Juegos', icon: 'Gamepad2', color: 'bg-cyan-100 text-cyan-600 border-cyan-200' },
     { path: 'aprendizaje', label: 'Aprendizaje', icon: 'GraduationCap', color: 'bg-emerald-100 text-emerald-600 border-emerald-200' },
+    { path: 'me-duele', label: 'Me duele', icon: 'Heart', color: 'bg-rose-100 text-rose-600 border-rose-200' },
+    { path: 'cambio-planes', label: 'Cambio de planes', icon: 'RefreshCcw', color: 'bg-indigo-100 text-indigo-700 border-indigo-200' },
+    { path: 'mis-logros', label: 'Mis logros', icon: 'Trophy', color: 'bg-amber-100 text-amber-700 border-amber-200' },
   ];
 
   return (
     <div className="space-y-8">
       <div className="text-center">
         <h2 className="text-4xl font-child font-bold text-slate-800">¡Hola! ¿Qué quieres hacer hoy?</h2>
+        {childName && <p className="text-slate-500 mt-2 font-medium">Hola, {childName}</p>}
       </div>
       
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
@@ -96,6 +134,201 @@ const ChildHome = () => {
             </div>
             <span>{item.label}</span>
           </Link>
+        ))}
+      </div>
+    </div>
+  );
+};
+
+const PainModule = () => {
+  const [bodyPart, setBodyPart] = useState<string | null>(null);
+  const [intensity, setIntensity] = useState<PainReport['intensity'] | null>(null);
+  const { speak } = useSpeech();
+
+  const bodyParts = ['Cabeza', 'Ojos', 'Oído', 'Boca', 'Garganta', 'Dientes', 'Panza', 'Espalda', 'Brazo', 'Mano', 'Pierna', 'Pie', 'Todo el cuerpo', 'No sé'];
+  const actions = ['Pedir ayuda', 'Avisar a mamá/papá', 'Descansar', 'Tomar agua', 'Ir a un lugar tranquilo'];
+
+  const finalPhrase = bodyPart && intensity ? `Me duele ${bodyPart === 'No sé' ? 'no sé dónde' : `la ${bodyPart.toLowerCase()}`} ${intensity.toLowerCase()}.` : '';
+
+  const saveReport = (selectedIntensity: PainReport['intensity']) => {
+    if (!bodyPart) return;
+    const currentReports = getStorageItem<PainReport[]>(LUMI_STORAGE_KEYS.painReports, []) ?? [];
+    const newReport: PainReport = {
+      timestamp: new Date().toISOString(),
+      bodyPart,
+      intensity: selectedIntensity,
+    };
+    setStorageItem(LUMI_STORAGE_KEYS.painReports, [newReport, ...currentReports]);
+  };
+
+  return (
+    <div className="max-w-5xl mx-auto space-y-10">
+      <div className="text-center space-y-3">
+        <h2 className="text-4xl font-child font-bold text-rose-700">¿Dónde te duele?</h2>
+      </div>
+
+      <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-4">
+        {bodyParts.map((part) => (
+          <button
+            key={part}
+            onClick={() => {
+              setBodyPart(part);
+              setIntensity(null);
+              speak(part);
+            }}
+            className={cn(
+              'btn-child py-8 bg-white border-2',
+              bodyPart === part ? 'border-rose-300 bg-rose-50 text-rose-700' : 'border-slate-100 text-slate-800'
+            )}
+          >
+            {part}
+          </button>
+        ))}
+      </div>
+
+      {bodyPart && (
+        <div className="space-y-6">
+          <h3 className="text-3xl font-child font-bold text-center">¿Cuánto te duele?</h3>
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 max-w-3xl mx-auto">
+            {(['Poquito', 'Medio', 'Mucho'] as PainReport['intensity'][]).map((level) => (
+              <button
+                key={level}
+                onClick={() => {
+                  setIntensity(level);
+                  saveReport(level);
+                }}
+                className={cn(
+                  'btn-child py-8 border-2',
+                  intensity === level ? 'bg-rose-500 text-white border-rose-600' : 'bg-white border-slate-100 text-slate-800'
+                )}
+              >
+                {level}
+              </button>
+            ))}
+          </div>
+        </div>
+      )}
+
+      {finalPhrase && (
+        <div className="card-lumi bg-rose-50 border-rose-200 space-y-5">
+          <p className="text-3xl font-child font-bold text-rose-800 text-center">{finalPhrase}</p>
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-3">
+            {actions.map((action) => (
+              <div key={action} className="bg-white border border-rose-100 rounded-2xl px-4 py-3 text-center font-bold text-rose-700">
+                {action}
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
+    </div>
+  );
+};
+
+const PlanChangeModule = () => {
+  const planChanges = getStorageItem<PlanChangesState>(LUMI_STORAGE_KEYS.planChanges, { items: [], activeId: null }) ?? { items: [], activeId: null };
+  const activeChange = planChanges.items.find((item) => item.id === planChanges.activeId) || null;
+  const supportButtons = ['Estoy triste', 'Estoy enojado', 'Necesito ayuda', 'Quiero respirar', 'Quiero descansar'];
+  const { speak } = useSpeech();
+
+  if (!activeChange) {
+    return (
+      <div className="max-w-4xl mx-auto text-center py-16 space-y-4">
+        <h2 className="text-4xl font-child font-bold text-indigo-800">Cambio de planes</h2>
+        <p className="text-slate-500">No hay un cambio activo por ahora.</p>
+      </div>
+    );
+  }
+
+  return (
+    <div className="max-w-5xl mx-auto space-y-8">
+      <div className="text-center space-y-3">
+        <h2 className="text-4xl font-child font-bold text-indigo-800">Cambio de planes</h2>
+        <p className="text-slate-500">Te explicamos el cambio paso a paso.</p>
+      </div>
+
+      <div className="card-lumi bg-indigo-50 border-indigo-100 space-y-6">
+        <div className="bg-white rounded-2xl p-5 border border-indigo-100">
+          <p className="text-xs font-bold uppercase tracking-widest text-indigo-400">Antes íbamos a:</p>
+          <p className="text-2xl font-child font-bold text-indigo-900 mt-1">{activeChange.beforeGoingTo}</p>
+        </div>
+        <div className="bg-white rounded-2xl p-5 border border-indigo-100">
+          <p className="text-xs font-bold uppercase tracking-widest text-indigo-400">Ahora vamos a:</p>
+          <p className="text-2xl font-child font-bold text-indigo-900 mt-1">{activeChange.nowGoingTo}</p>
+        </div>
+        <div className="bg-white rounded-2xl p-5 border border-indigo-100">
+          <p className="text-xs font-bold uppercase tracking-widest text-indigo-400">Esto sigue igual:</p>
+          <p className="text-xl font-bold text-slate-700 mt-1">{activeChange.stillTheSame}</p>
+        </div>
+        <div className="bg-white rounded-2xl p-5 border border-indigo-100">
+          <p className="text-xs font-bold uppercase tracking-widest text-indigo-400">Puedes hacer esto:</p>
+          <p className="text-xl font-bold text-slate-700 mt-1">{activeChange.canDoThis}</p>
+        </div>
+        <div className="bg-indigo-600 rounded-2xl p-5 text-white">
+          <p className="text-xs font-bold uppercase tracking-widest text-indigo-200">Mensaje de calma</p>
+          <p className="text-xl font-bold mt-1">{activeChange.calmMessage}</p>
+        </div>
+      </div>
+
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-3">
+        {supportButtons.map((button) => (
+          <button key={button} onClick={() => speak(button)} className="btn-child py-4 bg-white border-slate-100 text-slate-700">
+            {button}
+          </button>
+        ))}
+      </div>
+    </div>
+  );
+};
+
+const AchievementsModule = () => {
+  const achievements = [
+    'Completé una rutina.',
+    'Pedí ayuda.',
+    'Dije cómo me siento.',
+    'Usé la zona de calma.',
+    'Practiqué una actividad.',
+    'Terminé una historia.',
+    'Intenté algo nuevo.',
+  ];
+  const positiveMessages = ['Buen intento.', 'Lo lograste.', 'Gracias por intentarlo.', 'Puedes volver a intentarlo.'];
+  const [selectedMessage, setSelectedMessage] = useState<string | null>(null);
+
+  const addAchievement = (achievement: string) => {
+    const message = positiveMessages[Math.floor(Math.random() * positiveMessages.length)];
+    setSelectedMessage(message);
+    const current = getStorageItem<ProgressLog[]>(LUMI_STORAGE_KEYS.progress, []) ?? [];
+    const nextLog: ProgressLog = {
+      id: crypto.randomUUID(),
+      achievement,
+      message,
+      timestamp: new Date().toISOString(),
+    };
+    setStorageItem(LUMI_STORAGE_KEYS.progress, [nextLog, ...current]);
+  };
+
+  return (
+    <div className="max-w-5xl mx-auto space-y-8">
+      <div className="text-center space-y-2">
+        <h2 className="text-4xl font-child font-bold text-amber-800">Mis logros</h2>
+        <p className="text-slate-500">Cada paso cuenta. Elige tu logro de hoy.</p>
+      </div>
+
+      {selectedMessage && (
+        <div className="card-lumi bg-amber-50 border-amber-200 text-center">
+          <p className="text-3xl font-child font-bold text-amber-800">{selectedMessage}</p>
+        </div>
+      )}
+
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+        {achievements.map((item) => (
+          <button
+            key={item}
+            onClick={() => addAchievement(item)}
+            className="btn-child bg-white border-slate-100 text-slate-800 hover:border-amber-300 hover:bg-amber-50 text-left"
+          >
+            {item}
+          </button>
         ))}
       </div>
     </div>
@@ -220,25 +453,55 @@ const FirstThen = () => {
 // --- Emociones ---
 
 const EmotionsBoard = () => {
-  const [selected, setSelected] = useState<typeof emotions[0] | null>(null);
+  const [selected, setSelected] = useState<{ id: string; label: string; icon: string; color: string } | null>(null);
+  const [intensity, setIntensity] = useState<'Poquito' | 'Medio' | 'Mucho' | null>(null);
+  const [strategy, setStrategy] = useState<string | null>(null);
   const { speak } = useSpeech();
 
+  const emotionOptions = [
+    ...emotions.map((e) => ({ id: e.id, label: e.label, icon: e.icon, color: e.color })),
+    { id: 'confused', label: 'Confundido', icon: 'CircleHelp', color: 'bg-slate-100 border-slate-300 text-slate-700' },
+    { id: 'nervous', label: 'Nervioso', icon: 'Zap', color: 'bg-violet-100 border-violet-300 text-violet-700' },
+    { id: 'bored', label: 'Aburrido', icon: 'Clock3', color: 'bg-zinc-100 border-zinc-300 text-zinc-700' },
+    { id: 'excited', label: 'Emocionado', icon: 'PartyPopper', color: 'bg-emerald-100 border-emerald-300 text-emerald-700' },
+    { id: 'frustrated', label: 'Frustrado', icon: 'TriangleAlert', color: 'bg-rose-100 border-rose-300 text-rose-700' },
+    { id: 'calm', label: 'Tranquilo', icon: 'Leaf', color: 'bg-teal-100 border-teal-300 text-teal-700' },
+    { id: 'dontknow', label: 'No sé', icon: 'HelpCircle', color: 'bg-gray-100 border-gray-300 text-gray-700' },
+  ];
+  const strategies = ['Respirar', 'Descansar', 'Pedir ayuda', 'Ir a lugar tranquilo', 'Tomar agua', 'Pedir abrazo', 'Estar solo', 'Dibujar'];
+
   useEffect(() => {
-    if (selected) {
-      speak(`Me siento ${selected.label}. ${selected.advice.join('. ')}`);
+    if (selected && !intensity) {
+      speak(`Me siento ${selected.label}`);
     }
   }, [selected, speak]);
+
+  const saveEmotionLog = (logStrategy: string) => {
+    if (!selected || !intensity) return;
+    const current = getStorageItem<any[]>(LUMI_STORAGE_KEYS.emotionLogs, []) ?? [];
+    const nextLog = {
+      timestamp: new Date().toISOString(),
+      emotion: selected.label,
+      intensity,
+      strategy: logStrategy,
+    };
+    setStorageItem(LUMI_STORAGE_KEYS.emotionLogs, [nextLog, ...current]);
+  };
+
+  const finalPhrase = selected && intensity && strategy
+    ? `Estoy ${selected.label.toLowerCase()} ${intensity.toLowerCase()} y necesito ${strategy.toLowerCase()}.`
+    : null;
 
   return (
     <div className="space-y-12 max-w-4xl mx-auto">
       <div className="text-center space-y-4">
         <h2 className="text-4xl font-child font-bold">¿Cómo te sientes hoy?</h2>
-        <p className="text-slate-500">Toca una emoción para ver qué podemos hacer</p>
+        <p className="text-slate-500">Paso 1: elige emoción · Paso 2: intensidad · Paso 3: estrategia</p>
       </div>
 
       {!selected ? (
         <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-6">
-          {emotions.map((emotion) => (
+          {emotionOptions.map((emotion) => (
             <button
               key={emotion.id}
               onClick={() => setSelected(emotion)}
@@ -252,6 +515,69 @@ const EmotionsBoard = () => {
             </button>
           ))}
         </div>
+      ) : !intensity ? (
+        <motion.div
+          initial={{ opacity: 0, scale: 0.95 }}
+          animate={{ opacity: 1, scale: 1 }}
+          className={cn("p-10 rounded-[40px] border-4 relative", selected.color)}
+        >
+          <button
+            onClick={() => {
+              setSelected(null);
+              setIntensity(null);
+              setStrategy(null);
+            }}
+            className="absolute top-6 right-6 p-2 rounded-full hover:bg-white/50 transition-colors"
+          >
+            <X size={32} />
+          </button>
+          <div className="space-y-8">
+            <div className="text-center space-y-2">
+              <h3 className="text-5xl font-child font-bold">Me siento {selected.label}</h3>
+              <p className="font-bold uppercase tracking-widest opacity-70">¿Cuánto te sientes así?</p>
+            </div>
+            <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+              {(['Poquito', 'Medio', 'Mucho'] as const).map((level) => (
+                <button key={level} onClick={() => setIntensity(level)} className="btn-child bg-white/80 border-white/60">
+                  {level}
+                </button>
+              ))}
+            </div>
+          </div>
+        </motion.div>
+      ) : !strategy ? (
+        <motion.div
+          initial={{ opacity: 0, scale: 0.95 }}
+          animate={{ opacity: 1, scale: 1 }}
+          className={cn("p-10 rounded-[40px] border-4 relative", selected.color)}
+        >
+          <button
+            onClick={() => setIntensity(null)}
+            className="absolute top-6 right-6 p-2 rounded-full hover:bg-white/50 transition-colors"
+          >
+            <X size={32} />
+          </button>
+          <div className="space-y-8">
+            <div className="text-center space-y-2">
+              <h3 className="text-4xl font-child font-bold">Me siento {selected.label} {intensity.toLowerCase()}</h3>
+              <p className="font-bold uppercase tracking-widest opacity-70">¿Qué te ayudaría?</p>
+            </div>
+            <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-4">
+              {strategies.map((item) => (
+                <button
+                  key={item}
+                  onClick={() => {
+                    setStrategy(item);
+                    saveEmotionLog(item);
+                  }}
+                  className="btn-child bg-white/80 border-white/60"
+                >
+                  {item}
+                </button>
+              ))}
+            </div>
+          </div>
+        </motion.div>
       ) : (
         <motion.div 
           initial={{ opacity: 0, scale: 0.9 }}
@@ -259,7 +585,11 @@ const EmotionsBoard = () => {
           className={cn("p-10 rounded-[40px] border-4 relative", selected.color)}
         >
           <button 
-            onClick={() => setSelected(null)}
+            onClick={() => {
+              setSelected(null);
+              setIntensity(null);
+              setStrategy(null);
+            }}
             className="absolute top-6 right-6 p-2 rounded-full hover:bg-white/50 transition-colors"
           >
             <X size={32} />
@@ -271,15 +601,11 @@ const EmotionsBoard = () => {
             </div>
             
             <div className="space-y-6 flex-1">
-              <h3 className="text-5xl font-child font-bold">Me siento {selected.label}</h3>
+              <h3 className="text-5xl font-child font-bold">{finalPhrase}</h3>
               <div className="space-y-4">
-                <p className="font-bold text-xl opacity-80 uppercase tracking-widest">Podemos intentar:</p>
-                <div className="flex flex-wrap gap-3">
-                  {selected.advice.map((item, idx) => (
-                    <div key={idx} className="bg-white/50 px-6 py-3 rounded-2xl font-bold text-lg border border-black/5">
-                      {item}
-                    </div>
-                  ))}
+                <p className="font-bold text-xl opacity-80 uppercase tracking-widest">Estrategia elegida:</p>
+                <div className="bg-white/50 px-6 py-3 rounded-2xl font-bold text-lg border border-black/5 inline-block">
+                  {strategy}
                 </div>
               </div>
             </div>
@@ -294,10 +620,66 @@ const EmotionsBoard = () => {
 
 const NeedsBoard = () => {
   const [activePhrase, setActivePhrase] = useState<string | null>(null);
+  const [activeCategory, setActiveCategory] = useState<string>('Necesidades básicas');
 
-  const handleSpeak = (phrase: string) => {
+  const categorizedNeeds = [
+    {
+      category: 'Necesidades básicas',
+      items: [
+        { label: 'Agua', phrase: 'Necesito agua.', icon: 'Droplets' },
+        { label: 'Comida', phrase: 'Necesito comida.', icon: 'Apple' },
+        { label: 'Baño', phrase: 'Necesito ir al baño.', icon: 'Bath' },
+        { label: 'Dormir', phrase: 'Necesito dormir.', icon: 'Bed' },
+        { label: 'Descanso', phrase: 'Necesito descansar.', icon: 'Moon' },
+      ],
+    },
+    {
+      category: 'Sensorial',
+      items: [
+        { label: 'Silencio', phrase: 'Necesito silencio.', icon: 'VolumeX' },
+        { label: 'Audífonos', phrase: 'Necesito audífonos.', icon: 'Headphones' },
+        { label: 'Luz baja', phrase: 'Necesito luz baja.', icon: 'LightbulbOff' },
+        { label: 'No tocar', phrase: 'No me toques, por favor.', icon: 'Hand' },
+        { label: 'Lugar tranquilo', phrase: 'Necesito un lugar tranquilo.', icon: 'TentTree' },
+      ],
+    },
+    {
+      category: 'Social',
+      items: [
+        { label: 'Mamá', phrase: 'Necesito a mamá.', icon: 'UserRound' },
+        { label: 'Papá', phrase: 'Necesito a papá.', icon: 'UserRound' },
+        { label: 'Maestro', phrase: 'Necesito al maestro.', icon: 'GraduationCap' },
+        { label: 'Ayuda', phrase: 'Necesito ayuda.', icon: 'HelpingHand' },
+        { label: 'Abrazo', phrase: 'Necesito un abrazo.', icon: 'Heart' },
+        { label: 'Estar solo', phrase: 'Necesito estar solo.', icon: 'DoorClosed' },
+      ],
+    },
+    {
+      category: 'Escuela / aprendizaje',
+      items: [
+        { label: 'No entiendo', phrase: 'No entiendo.', icon: 'CircleHelp' },
+        { label: 'Repite por favor', phrase: 'Repite por favor.', icon: 'Repeat' },
+        { label: 'Terminé', phrase: 'Terminé.', icon: 'CheckCircle2' },
+        { label: 'Quiero intentar otra vez', phrase: 'Quiero intentar otra vez.', icon: 'RotateCcw' },
+        { label: 'Necesito pausa', phrase: 'Necesito pausa.', icon: 'PauseCircle' },
+      ],
+    },
+  ];
+
+  const currentNeeds = categorizedNeeds.find((c) => c.category === activeCategory)?.items ?? categorizedNeeds[0].items;
+
+  const handleSpeak = (category: string, label: string, phrase: string) => {
     setActivePhrase(phrase);
-    // In a real app, browser speech synthesis would be used here
+    const currentLogs = getStorageItem<any[]>(LUMI_STORAGE_KEYS.needLogs, []) ?? [];
+    setStorageItem(LUMI_STORAGE_KEYS.needLogs, [
+      {
+        timestamp: new Date().toISOString(),
+        category,
+        need: label,
+        phrase,
+      },
+      ...currentLogs,
+    ]);
     setTimeout(() => setActivePhrase(null), 3000);
   };
 
@@ -322,11 +704,29 @@ const NeedsBoard = () => {
       </AnimatePresence>
 
       {!activePhrase && (
-        <div className="grid grid-cols-2 md:grid-cols-3 gap-6">
-          {needs.map((need) => (
+        <>
+          <div className="flex flex-wrap gap-3 justify-center">
+            {categorizedNeeds.map((section) => (
+              <button
+                key={section.category}
+                onClick={() => setActiveCategory(section.category)}
+                className={cn(
+                  'px-4 py-2 rounded-full border text-sm font-bold transition-all',
+                  activeCategory === section.category
+                    ? 'bg-emerald-100 border-emerald-300 text-emerald-700'
+                    : 'bg-white border-slate-200 text-slate-600'
+                )}
+              >
+                {section.category}
+              </button>
+            ))}
+          </div>
+
+          <div className="grid grid-cols-2 md:grid-cols-3 gap-6">
+          {currentNeeds.map((need) => (
             <button
-              key={need.id}
-              onClick={() => handleSpeak(need.phrase)}
+              key={`${activeCategory}-${need.label}`}
+              onClick={() => handleSpeak(activeCategory, need.label, need.phrase)}
               className="btn-child flex flex-col gap-6 py-12 bg-white border-slate-100 text-slate-800 hover:border-emerald-300 hover:bg-emerald-50"
             >
               <div className="bg-slate-50 p-6 rounded-[32px] text-emerald-600">
@@ -336,6 +736,7 @@ const NeedsBoard = () => {
             </button>
           ))}
         </div>
+        </>
       )}
     </div>
   );
@@ -1025,6 +1426,9 @@ export default function ChildModule() {
         <Route path="/historias" element={<StoriesModule />} />
         <Route path="/juegos" element={<GamesModule />} />
         <Route path="/aprendizaje" element={<LearningModule />} />
+        <Route path="/me-duele" element={<PainModule />} />
+        <Route path="/cambio-planes" element={<PlanChangeModule />} />
+        <Route path="/mis-logros" element={<AchievementsModule />} />
       </Routes>
     </div>
   );

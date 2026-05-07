@@ -22,20 +22,33 @@ import {
 import ChildModule from './components/ChildModule';
 import ParentModule from './components/ParentModule';
 import { cn } from './lib/utils';
+import { getStorageItem, setStorageItem, LUMI_STORAGE_KEYS } from './utils/storage';
 
 // --- Context & Types ---
 
 interface AppSettings {
   lowStimulus: boolean;
   soundEnabled: boolean;
-  fontSize: 'normal' | 'large';
+  voiceEnabled: boolean;
+  fontSize: 'normal' | 'large' | 'xlarge';
+  motion: 'normal' | 'reducido';
+  contrast: 'suave' | 'alto';
+  showTextWithImages: boolean;
 }
 
 export const SettingsContext = createContext<{
   settings: AppSettings;
   updateSettings: (s: Partial<AppSettings>) => void;
 }>({
-  settings: { lowStimulus: false, soundEnabled: true, fontSize: 'normal' },
+  settings: {
+    lowStimulus: false,
+    soundEnabled: true,
+    voiceEnabled: true,
+    fontSize: 'normal',
+    motion: 'normal',
+    contrast: 'suave',
+    showTextWithImages: true,
+  },
   updateSettings: () => {},
 });
 
@@ -51,7 +64,8 @@ const Layout = ({ children }: { children: React.ReactNode }) => {
     <div className={cn(
       "min-h-screen flex flex-col",
       settings.lowStimulus && "low-stimulus",
-      settings.fontSize === 'large' && "text-xl"
+      settings.fontSize === 'large' && "text-xl",
+      settings.fontSize === 'xlarge' && "text-2xl"
     )}>
       {/* Header */}
       <header className="bg-white/80 backdrop-blur-md sticky top-0 z-50 border-bottom border-lumi-sand px-6 py-4 flex items-center justify-between">
@@ -98,7 +112,7 @@ const Layout = ({ children }: { children: React.ReactNode }) => {
             initial={{ opacity: 0, y: 10 }}
             animate={{ opacity: 1, y: 0 }}
             exit={{ opacity: 0, y: -10 }}
-            transition={{ duration: 0.3, ease: "easeOut" }}
+            transition={{ duration: settings.motion === 'reducido' ? 0 : 0.3, ease: "easeOut" }}
           >
             {children}
           </motion.div>
@@ -203,15 +217,33 @@ const Home = () => {
 // --- Main App ---
 
 export default function App() {
-  const [settings, setSettings] = useState<AppSettings>({
-    lowStimulus: false,
-    soundEnabled: true,
-    fontSize: 'normal',
+  const [settings, setSettings] = useState<AppSettings>(() => {
+    return getStorageItem<AppSettings>(LUMI_STORAGE_KEYS.accessibilitySettings, {
+      lowStimulus: false,
+      soundEnabled: true,
+      voiceEnabled: true,
+      fontSize: 'normal',
+      motion: 'normal',
+      contrast: 'suave',
+      showTextWithImages: true,
+    }) ?? {
+      lowStimulus: false,
+      soundEnabled: true,
+      voiceEnabled: true,
+      fontSize: 'normal',
+      motion: 'normal',
+      contrast: 'suave',
+      showTextWithImages: true,
+    };
   });
 
   const updateSettings = (partial: Partial<AppSettings>) => {
     setSettings(prev => ({ ...prev, ...partial }));
   };
+
+  useEffect(() => {
+    setStorageItem(LUMI_STORAGE_KEYS.accessibilitySettings, settings);
+  }, [settings]);
 
   return (
     <SettingsContext.Provider value={{ settings, updateSettings }}>
