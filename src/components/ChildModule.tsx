@@ -46,6 +46,20 @@ interface PainReport {
   intensity: 'Poquito' | 'Medio' | 'Mucho';
 }
 
+interface PlanChange {
+  id: string;
+  beforeGoingTo: string;
+  nowGoingTo: string;
+  stillTheSame: string;
+  canDoThis: string;
+  calmMessage: string;
+}
+
+interface PlanChangesState {
+  items: PlanChange[];
+  activeId: string | null;
+}
+
 // --- Helpers ---
 
 const useSpeech = () => {
@@ -86,6 +100,7 @@ const ChildHome = () => {
     { path: 'juegos', label: 'Juegos', icon: 'Gamepad2', color: 'bg-cyan-100 text-cyan-600 border-cyan-200' },
     { path: 'aprendizaje', label: 'Aprendizaje', icon: 'GraduationCap', color: 'bg-emerald-100 text-emerald-600 border-emerald-200' },
     { path: 'me-duele', label: 'Me duele', icon: 'Heart', color: 'bg-rose-100 text-rose-600 border-rose-200' },
+    { path: 'cambio-planes', label: 'Cambio de planes', icon: 'RefreshCcw', color: 'bg-indigo-100 text-indigo-700 border-indigo-200' },
   ];
 
   return (
@@ -198,6 +213,62 @@ const PainModule = () => {
           </div>
         </div>
       )}
+    </div>
+  );
+};
+
+const PlanChangeModule = () => {
+  const planChanges = getStorageItem<PlanChangesState>(LUMI_STORAGE_KEYS.planChanges, { items: [], activeId: null }) ?? { items: [], activeId: null };
+  const activeChange = planChanges.items.find((item) => item.id === planChanges.activeId) || null;
+  const supportButtons = ['Estoy triste', 'Estoy enojado', 'Necesito ayuda', 'Quiero respirar', 'Quiero descansar'];
+  const { speak } = useSpeech();
+
+  if (!activeChange) {
+    return (
+      <div className="max-w-4xl mx-auto text-center py-16 space-y-4">
+        <h2 className="text-4xl font-child font-bold text-indigo-800">Cambio de planes</h2>
+        <p className="text-slate-500">No hay un cambio activo por ahora.</p>
+      </div>
+    );
+  }
+
+  return (
+    <div className="max-w-5xl mx-auto space-y-8">
+      <div className="text-center space-y-3">
+        <h2 className="text-4xl font-child font-bold text-indigo-800">Cambio de planes</h2>
+        <p className="text-slate-500">Te explicamos el cambio paso a paso.</p>
+      </div>
+
+      <div className="card-lumi bg-indigo-50 border-indigo-100 space-y-6">
+        <div className="bg-white rounded-2xl p-5 border border-indigo-100">
+          <p className="text-xs font-bold uppercase tracking-widest text-indigo-400">Antes íbamos a:</p>
+          <p className="text-2xl font-child font-bold text-indigo-900 mt-1">{activeChange.beforeGoingTo}</p>
+        </div>
+        <div className="bg-white rounded-2xl p-5 border border-indigo-100">
+          <p className="text-xs font-bold uppercase tracking-widest text-indigo-400">Ahora vamos a:</p>
+          <p className="text-2xl font-child font-bold text-indigo-900 mt-1">{activeChange.nowGoingTo}</p>
+        </div>
+        <div className="bg-white rounded-2xl p-5 border border-indigo-100">
+          <p className="text-xs font-bold uppercase tracking-widest text-indigo-400">Esto sigue igual:</p>
+          <p className="text-xl font-bold text-slate-700 mt-1">{activeChange.stillTheSame}</p>
+        </div>
+        <div className="bg-white rounded-2xl p-5 border border-indigo-100">
+          <p className="text-xs font-bold uppercase tracking-widest text-indigo-400">Puedes hacer esto:</p>
+          <p className="text-xl font-bold text-slate-700 mt-1">{activeChange.canDoThis}</p>
+        </div>
+        <div className="bg-indigo-600 rounded-2xl p-5 text-white">
+          <p className="text-xs font-bold uppercase tracking-widest text-indigo-200">Mensaje de calma</p>
+          <p className="text-xl font-bold mt-1">{activeChange.calmMessage}</p>
+        </div>
+      </div>
+
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-3">
+        {supportButtons.map((button) => (
+          <button key={button} onClick={() => speak(button)} className="btn-child py-4 bg-white border-slate-100 text-slate-700">
+            {button}
+          </button>
+        ))}
+      </div>
     </div>
   );
 };
@@ -1126,6 +1197,7 @@ export default function ChildModule() {
         <Route path="/juegos" element={<GamesModule />} />
         <Route path="/aprendizaje" element={<LearningModule />} />
         <Route path="/me-duele" element={<PainModule />} />
+        <Route path="/cambio-planes" element={<PlanChangeModule />} />
       </Routes>
     </div>
   );

@@ -25,7 +25,10 @@ export const LUMI_STORAGE_DEFAULTS = {
     gameStars: 0,
   },
   [LUMI_STORAGE_KEYS.painReports]: [],
-  [LUMI_STORAGE_KEYS.planChanges]: [],
+  [LUMI_STORAGE_KEYS.planChanges]: {
+    items: [],
+    activeId: null,
+  },
   [LUMI_STORAGE_KEYS.triggerLogs]: [],
 } as const;
 

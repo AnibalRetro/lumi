@@ -19,7 +19,8 @@ import {
   ChevronRight,
   ChevronLeft,
   Calendar,
-  ArrowRightLeft
+  ArrowRightLeft,
+  RefreshCcw
 } from 'lucide-react';
 import { cn } from '../lib/utils';
 import { clinics } from '../data/mockData';
@@ -41,6 +42,29 @@ interface PainReport {
   bodyPart: string;
   intensity: 'Poquito' | 'Medio' | 'Mucho';
 }
+
+interface PlanChange {
+  id: string;
+  beforeGoingTo: string;
+  nowGoingTo: string;
+  stillTheSame: string;
+  canDoThis: string;
+  calmMessage: string;
+}
+
+interface PlanChangesState {
+  items: PlanChange[];
+  activeId: string | null;
+}
+
+const defaultPlanExamples: PlanChange[] = [
+  { id: '1', beforeGoingTo: 'Parque', nowGoingTo: 'Casa', stillTheSame: 'Jugaremos juntos', canDoThis: 'Elegir un juego tranquilo', calmMessage: 'Estoy contigo, vamos paso a paso.' },
+  { id: '2', beforeGoingTo: 'Escuela', nowGoingTo: 'Casa', stillTheSame: 'Tu rutina de comida sigue igual', canDoThis: 'Preparar tu espacio favorito', calmMessage: 'Respiramos juntos y seguimos el plan nuevo.' },
+  { id: '3', beforeGoingTo: 'Ruta normal', nowGoingTo: 'Ruta alterna', stillTheSame: 'Llegaremos al mismo lugar', canDoThis: 'Escuchar música tranquila', calmMessage: 'El cambio está bien, estamos seguros.' },
+  { id: '4', beforeGoingTo: 'Tarde tranquila', nowGoingTo: 'Recibir visita', stillTheSame: 'Tu habitación sigue disponible', canDoThis: 'Tomar descansos cortos', calmMessage: 'Puedes pedir una pausa cuando quieras.' },
+  { id: '5', beforeGoingTo: 'Consulta puntual', nowGoingTo: 'Esperar un poco más', stillTheSame: 'Seguimos con el doctor', canDoThis: 'Tomar agua y respirar', calmMessage: 'Estamos haciendo un gran trabajo esperando.' },
+  { id: '6', beforeGoingTo: 'Dormir a las 8:00', nowGoingTo: 'Dormir a las 8:30', stillTheSame: 'Tu cuento antes de dormir sigue', canDoThis: 'Usar luz tenue y respirar', calmMessage: 'Pronto será hora de descansar.' },
+];
 
 const avatarOptions = ['🦊', '🐼', '🦁', '🐯', '🐬', '🦄'];
 const readingLevelOptions = [
@@ -102,6 +126,13 @@ const ParentHome = () => {
       desc: 'Consulta reportes recientes del módulo infantil.',
       icon: <AlertCircle size={32} />,
       color: 'bg-rose-50 border-rose-100 text-rose-700'
+    },
+    {
+      path: 'cambio-planes',
+      label: 'Cambio de planes',
+      desc: 'Crea y activa mensajes para transiciones inesperadas.',
+      icon: <RefreshCcw size={32} />,
+      color: 'bg-indigo-50 border-indigo-100 text-indigo-700'
     },
     {
       path: 'directorio', 
@@ -421,6 +452,80 @@ const PainHistoryPage = () => {
   );
 };
 
+const PlanChangesPage = () => {
+  const [state, setState] = useState<PlanChangesState>(() => {
+    return getStorageItem<PlanChangesState>(LUMI_STORAGE_KEYS.planChanges, { items: defaultPlanExamples, activeId: defaultPlanExamples[0].id }) ?? { items: defaultPlanExamples, activeId: defaultPlanExamples[0].id };
+  });
+  const [form, setForm] = useState<Omit<PlanChange, 'id'>>({
+    beforeGoingTo: '',
+    nowGoingTo: '',
+    stillTheSame: '',
+    canDoThis: '',
+    calmMessage: '',
+  });
+
+  const persistState = (nextState: PlanChangesState) => {
+    setState(nextState);
+    setStorageItem(LUMI_STORAGE_KEYS.planChanges, nextState);
+  };
+
+  const addChange = () => {
+    if (!form.beforeGoingTo || !form.nowGoingTo) return;
+    const newItem: PlanChange = { ...form, id: crypto.randomUUID() };
+    const nextState: PlanChangesState = {
+      items: [newItem, ...state.items],
+      activeId: state.activeId ?? newItem.id,
+    };
+    persistState(nextState);
+    setForm({ beforeGoingTo: '', nowGoingTo: '', stillTheSame: '', canDoThis: '', calmMessage: '' });
+  };
+
+  return (
+    <div className="max-w-5xl mx-auto space-y-8">
+      <div className="space-y-2">
+        <h2 className="text-3xl font-bold text-slate-900">Cambio de planes</h2>
+        <p className="text-slate-500">Crea mensajes claros y activa uno para modo niño.</p>
+      </div>
+
+      <div className="card-lumi space-y-4">
+        <div className="grid md:grid-cols-2 gap-4">
+          <input value={form.beforeGoingTo} onChange={(e) => setForm((p) => ({ ...p, beforeGoingTo: e.target.value }))} placeholder="Antes íbamos a" className="w-full bg-white border border-slate-200 rounded-2xl px-4 py-3" />
+          <input value={form.nowGoingTo} onChange={(e) => setForm((p) => ({ ...p, nowGoingTo: e.target.value }))} placeholder="Ahora vamos a" className="w-full bg-white border border-slate-200 rounded-2xl px-4 py-3" />
+          <input value={form.stillTheSame} onChange={(e) => setForm((p) => ({ ...p, stillTheSame: e.target.value }))} placeholder="Esto sigue igual" className="w-full bg-white border border-slate-200 rounded-2xl px-4 py-3" />
+          <input value={form.canDoThis} onChange={(e) => setForm((p) => ({ ...p, canDoThis: e.target.value }))} placeholder="Puedes hacer esto" className="w-full bg-white border border-slate-200 rounded-2xl px-4 py-3" />
+        </div>
+        <textarea value={form.calmMessage} onChange={(e) => setForm((p) => ({ ...p, calmMessage: e.target.value }))} placeholder="Mensaje de calma" className="w-full bg-white border border-slate-200 rounded-2xl px-4 py-3 min-h-24" />
+        <button type="button" onClick={addChange} className="bg-slate-900 text-white px-6 py-3 rounded-2xl font-bold">
+          Guardar cambio
+        </button>
+      </div>
+
+      <div className="space-y-3">
+        {state.items.map((item) => (
+          <div key={item.id} className="card-lumi border-slate-200">
+            <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
+              <div className="space-y-1">
+                <p><strong>Antes:</strong> {item.beforeGoingTo}</p>
+                <p><strong>Ahora:</strong> {item.nowGoingTo}</p>
+              </div>
+              <button
+                type="button"
+                onClick={() => persistState({ ...state, activeId: item.id })}
+                className={cn(
+                  'px-4 py-2 rounded-full text-sm font-bold border',
+                  state.activeId === item.id ? 'bg-emerald-100 border-emerald-300 text-emerald-700' : 'bg-white border-slate-200 text-slate-600'
+                )}
+              >
+                {state.activeId === item.id ? 'Cambio activo' : 'Activar este cambio'}
+              </button>
+            </div>
+          </div>
+        ))}
+      </div>
+    </div>
+  );
+};
+
 // --- Autism Info ---
 
 const AutismInfo = () => {
@@ -609,6 +714,7 @@ export default function ParentModule() {
         <Route path="/perfil-nino" element={<ChildProfilePage />} />
         <Route path="/accesibilidad" element={<AccessibilityPage />} />
         <Route path="/historial-me-duele" element={<PainHistoryPage />} />
+        <Route path="/cambio-planes" element={<PlanChangesPage />} />
         <Route path="/directorio" element={<ClinicsDirectory />} />
         <Route path="/recursos" element={<Resources />} />
       </Routes>
