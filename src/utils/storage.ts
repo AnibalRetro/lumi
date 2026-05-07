@@ -5,6 +5,7 @@ export const LUMI_STORAGE_KEYS = {
   accessibilitySettings: 'lumi_accessibility_settings',
   progress: 'lumi_progress',
   painReports: 'lumi_pain_reports',
+  emotionLogs: 'lumi_emotion_logs',
   planChanges: 'lumi_plan_changes',
   triggerLogs: 'lumi_trigger_logs',
 } as const;
@@ -25,6 +26,7 @@ export const LUMI_STORAGE_DEFAULTS = {
     gameStars: 0,
   },
   [LUMI_STORAGE_KEYS.painReports]: [],
+  [LUMI_STORAGE_KEYS.emotionLogs]: [],
   [LUMI_STORAGE_KEYS.planChanges]: {
     items: [],
     activeId: null,

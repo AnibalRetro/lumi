@@ -391,25 +391,55 @@ const FirstThen = () => {
 // --- Emociones ---
 
 const EmotionsBoard = () => {
-  const [selected, setSelected] = useState<typeof emotions[0] | null>(null);
+  const [selected, setSelected] = useState<{ id: string; label: string; icon: string; color: string } | null>(null);
+  const [intensity, setIntensity] = useState<'Poquito' | 'Medio' | 'Mucho' | null>(null);
+  const [strategy, setStrategy] = useState<string | null>(null);
   const { speak } = useSpeech();
 
+  const emotionOptions = [
+    ...emotions.map((e) => ({ id: e.id, label: e.label, icon: e.icon, color: e.color })),
+    { id: 'confused', label: 'Confundido', icon: 'CircleHelp', color: 'bg-slate-100 border-slate-300 text-slate-700' },
+    { id: 'nervous', label: 'Nervioso', icon: 'Zap', color: 'bg-violet-100 border-violet-300 text-violet-700' },
+    { id: 'bored', label: 'Aburrido', icon: 'Clock3', color: 'bg-zinc-100 border-zinc-300 text-zinc-700' },
+    { id: 'excited', label: 'Emocionado', icon: 'PartyPopper', color: 'bg-emerald-100 border-emerald-300 text-emerald-700' },
+    { id: 'frustrated', label: 'Frustrado', icon: 'TriangleAlert', color: 'bg-rose-100 border-rose-300 text-rose-700' },
+    { id: 'calm', label: 'Tranquilo', icon: 'Leaf', color: 'bg-teal-100 border-teal-300 text-teal-700' },
+    { id: 'dontknow', label: 'No sé', icon: 'HelpCircle', color: 'bg-gray-100 border-gray-300 text-gray-700' },
+  ];
+  const strategies = ['Respirar', 'Descansar', 'Pedir ayuda', 'Ir a lugar tranquilo', 'Tomar agua', 'Pedir abrazo', 'Estar solo', 'Dibujar'];
+
   useEffect(() => {
-    if (selected) {
-      speak(`Me siento ${selected.label}. ${selected.advice.join('. ')}`);
+    if (selected && !intensity) {
+      speak(`Me siento ${selected.label}`);
     }
   }, [selected, speak]);
+
+  const saveEmotionLog = (logStrategy: string) => {
+    if (!selected || !intensity) return;
+    const current = getStorageItem<any[]>(LUMI_STORAGE_KEYS.emotionLogs, []) ?? [];
+    const nextLog = {
+      timestamp: new Date().toISOString(),
+      emotion: selected.label,
+      intensity,
+      strategy: logStrategy,
+    };
+    setStorageItem(LUMI_STORAGE_KEYS.emotionLogs, [nextLog, ...current]);
+  };
+
+  const finalPhrase = selected && intensity && strategy
+    ? `Estoy ${selected.label.toLowerCase()} ${intensity.toLowerCase()} y necesito ${strategy.toLowerCase()}.`
+    : null;
 
   return (
     <div className="space-y-12 max-w-4xl mx-auto">
       <div className="text-center space-y-4">
         <h2 className="text-4xl font-child font-bold">¿Cómo te sientes hoy?</h2>
-        <p className="text-slate-500">Toca una emoción para ver qué podemos hacer</p>
+        <p className="text-slate-500">Paso 1: elige emoción · Paso 2: intensidad · Paso 3: estrategia</p>
       </div>
 
       {!selected ? (
         <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-6">
-          {emotions.map((emotion) => (
+          {emotionOptions.map((emotion) => (
             <button
               key={emotion.id}
               onClick={() => setSelected(emotion)}
@@ -423,6 +453,69 @@ const EmotionsBoard = () => {
             </button>
           ))}
         </div>
+      ) : !intensity ? (
+        <motion.div
+          initial={{ opacity: 0, scale: 0.95 }}
+          animate={{ opacity: 1, scale: 1 }}
+          className={cn("p-10 rounded-[40px] border-4 relative", selected.color)}
+        >
+          <button
+            onClick={() => {
+              setSelected(null);
+              setIntensity(null);
+              setStrategy(null);
+            }}
+            className="absolute top-6 right-6 p-2 rounded-full hover:bg-white/50 transition-colors"
+          >
+            <X size={32} />
+          </button>
+          <div className="space-y-8">
+            <div className="text-center space-y-2">
+              <h3 className="text-5xl font-child font-bold">Me siento {selected.label}</h3>
+              <p className="font-bold uppercase tracking-widest opacity-70">¿Cuánto te sientes así?</p>
+            </div>
+            <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+              {(['Poquito', 'Medio', 'Mucho'] as const).map((level) => (
+                <button key={level} onClick={() => setIntensity(level)} className="btn-child bg-white/80 border-white/60">
+                  {level}
+                </button>
+              ))}
+            </div>
+          </div>
+        </motion.div>
+      ) : !strategy ? (
+        <motion.div
+          initial={{ opacity: 0, scale: 0.95 }}
+          animate={{ opacity: 1, scale: 1 }}
+          className={cn("p-10 rounded-[40px] border-4 relative", selected.color)}
+        >
+          <button
+            onClick={() => setIntensity(null)}
+            className="absolute top-6 right-6 p-2 rounded-full hover:bg-white/50 transition-colors"
+          >
+            <X size={32} />
+          </button>
+          <div className="space-y-8">
+            <div className="text-center space-y-2">
+              <h3 className="text-4xl font-child font-bold">Me siento {selected.label} {intensity.toLowerCase()}</h3>
+              <p className="font-bold uppercase tracking-widest opacity-70">¿Qué te ayudaría?</p>
+            </div>
+            <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-4">
+              {strategies.map((item) => (
+                <button
+                  key={item}
+                  onClick={() => {
+                    setStrategy(item);
+                    saveEmotionLog(item);
+                  }}
+                  className="btn-child bg-white/80 border-white/60"
+                >
+                  {item}
+                </button>
+              ))}
+            </div>
+          </div>
+        </motion.div>
       ) : (
         <motion.div 
           initial={{ opacity: 0, scale: 0.9 }}
@@ -430,7 +523,11 @@ const EmotionsBoard = () => {
           className={cn("p-10 rounded-[40px] border-4 relative", selected.color)}
         >
           <button 
-            onClick={() => setSelected(null)}
+            onClick={() => {
+              setSelected(null);
+              setIntensity(null);
+              setStrategy(null);
+            }}
             className="absolute top-6 right-6 p-2 rounded-full hover:bg-white/50 transition-colors"
           >
             <X size={32} />
@@ -442,15 +539,11 @@ const EmotionsBoard = () => {
             </div>
             
             <div className="space-y-6 flex-1">
-              <h3 className="text-5xl font-child font-bold">Me siento {selected.label}</h3>
+              <h3 className="text-5xl font-child font-bold">{finalPhrase}</h3>
               <div className="space-y-4">
-                <p className="font-bold text-xl opacity-80 uppercase tracking-widest">Podemos intentar:</p>
-                <div className="flex flex-wrap gap-3">
-                  {selected.advice.map((item, idx) => (
-                    <div key={idx} className="bg-white/50 px-6 py-3 rounded-2xl font-bold text-lg border border-black/5">
-                      {item}
-                    </div>
-                  ))}
+                <p className="font-bold text-xl opacity-80 uppercase tracking-widest">Estrategia elegida:</p>
+                <div className="bg-white/50 px-6 py-3 rounded-2xl font-bold text-lg border border-black/5 inline-block">
+                  {strategy}
                 </div>
               </div>
             </div>
