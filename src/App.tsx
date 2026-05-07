@@ -187,7 +187,7 @@ const Home = () => {
               <h3 className="font-bold text-xl">¿Qué es Lumi?</h3>
             </div>
             <p className="text-slate-600">
-              Es una plataforma interactiva creada por **Make IT Group** y la **AMI** para ayudar a la comunicación y rutinas diarias.
+              Es una plataforma interactiva creada por Make IT Group y la AMI para ayudar a la comunicación y rutinas diarias.
             </p>
             <div className="pt-4 border-t border-slate-100">
               <p className="text-sm font-bold text-slate-400 uppercase tracking-widest">Institución aliada</p>
