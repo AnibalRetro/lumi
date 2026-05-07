@@ -32,7 +32,7 @@ import {
 } from 'lucide-react';
 import * as Icons from 'lucide-react';
 import { cn } from '../lib/utils';
-import { initialRoutines, emotions, needs, socialStories, gameScenarios, emotionChallenges, routineSequences, RoutineItem } from '../data/mockData';
+import { initialRoutines, emotions, socialStories, gameScenarios, emotionChallenges, routineSequences, RoutineItem } from '../data/mockData';
 import { SettingsContext } from '../App';
 import { getStorageItem, setStorageItem, LUMI_STORAGE_KEYS } from '../utils/storage';
 
@@ -558,10 +558,66 @@ const EmotionsBoard = () => {
 
 const NeedsBoard = () => {
   const [activePhrase, setActivePhrase] = useState<string | null>(null);
+  const [activeCategory, setActiveCategory] = useState<string>('Necesidades básicas');
 
-  const handleSpeak = (phrase: string) => {
+  const categorizedNeeds = [
+    {
+      category: 'Necesidades básicas',
+      items: [
+        { label: 'Agua', phrase: 'Necesito agua.', icon: 'Droplets' },
+        { label: 'Comida', phrase: 'Necesito comida.', icon: 'Apple' },
+        { label: 'Baño', phrase: 'Necesito ir al baño.', icon: 'Bath' },
+        { label: 'Dormir', phrase: 'Necesito dormir.', icon: 'Bed' },
+        { label: 'Descanso', phrase: 'Necesito descansar.', icon: 'Moon' },
+      ],
+    },
+    {
+      category: 'Sensorial',
+      items: [
+        { label: 'Silencio', phrase: 'Necesito silencio.', icon: 'VolumeX' },
+        { label: 'Audífonos', phrase: 'Necesito audífonos.', icon: 'Headphones' },
+        { label: 'Luz baja', phrase: 'Necesito luz baja.', icon: 'LightbulbOff' },
+        { label: 'No tocar', phrase: 'No me toques, por favor.', icon: 'Hand' },
+        { label: 'Lugar tranquilo', phrase: 'Necesito un lugar tranquilo.', icon: 'TentTree' },
+      ],
+    },
+    {
+      category: 'Social',
+      items: [
+        { label: 'Mamá', phrase: 'Necesito a mamá.', icon: 'UserRound' },
+        { label: 'Papá', phrase: 'Necesito a papá.', icon: 'UserRound' },
+        { label: 'Maestro', phrase: 'Necesito al maestro.', icon: 'GraduationCap' },
+        { label: 'Ayuda', phrase: 'Necesito ayuda.', icon: 'HelpingHand' },
+        { label: 'Abrazo', phrase: 'Necesito un abrazo.', icon: 'Heart' },
+        { label: 'Estar solo', phrase: 'Necesito estar solo.', icon: 'DoorClosed' },
+      ],
+    },
+    {
+      category: 'Escuela / aprendizaje',
+      items: [
+        { label: 'No entiendo', phrase: 'No entiendo.', icon: 'CircleHelp' },
+        { label: 'Repite por favor', phrase: 'Repite por favor.', icon: 'Repeat' },
+        { label: 'Terminé', phrase: 'Terminé.', icon: 'CheckCircle2' },
+        { label: 'Quiero intentar otra vez', phrase: 'Quiero intentar otra vez.', icon: 'RotateCcw' },
+        { label: 'Necesito pausa', phrase: 'Necesito pausa.', icon: 'PauseCircle' },
+      ],
+    },
+  ];
+
+  const currentNeeds = categorizedNeeds.find((c) => c.category === activeCategory)?.items ?? categorizedNeeds[0].items;
+
+  const handleSpeak = (category: string, label: string, phrase: string) => {
     setActivePhrase(phrase);
-    // In a real app, browser speech synthesis would be used here
+    const currentLogs = getStorageItem<any[]>(LUMI_STORAGE_KEYS.needLogs, []) ?? [];
+    setStorageItem(LUMI_STORAGE_KEYS.needLogs, [
+      {
+        timestamp: new Date().toISOString(),
+        category,
+        need: label,
+        phrase,
+      },
+      ...currentLogs,
+    ]);
     setTimeout(() => setActivePhrase(null), 3000);
   };
 
@@ -586,11 +642,29 @@ const NeedsBoard = () => {
       </AnimatePresence>
 
       {!activePhrase && (
-        <div className="grid grid-cols-2 md:grid-cols-3 gap-6">
-          {needs.map((need) => (
+        <>
+          <div className="flex flex-wrap gap-3 justify-center">
+            {categorizedNeeds.map((section) => (
+              <button
+                key={section.category}
+                onClick={() => setActiveCategory(section.category)}
+                className={cn(
+                  'px-4 py-2 rounded-full border text-sm font-bold transition-all',
+                  activeCategory === section.category
+                    ? 'bg-emerald-100 border-emerald-300 text-emerald-700'
+                    : 'bg-white border-slate-200 text-slate-600'
+                )}
+              >
+                {section.category}
+              </button>
+            ))}
+          </div>
+
+          <div className="grid grid-cols-2 md:grid-cols-3 gap-6">
+          {currentNeeds.map((need) => (
             <button
-              key={need.id}
-              onClick={() => handleSpeak(need.phrase)}
+              key={`${activeCategory}-${need.label}`}
+              onClick={() => handleSpeak(activeCategory, need.label, need.phrase)}
               className="btn-child flex flex-col gap-6 py-12 bg-white border-slate-100 text-slate-800 hover:border-emerald-300 hover:bg-emerald-50"
             >
               <div className="bg-slate-50 p-6 rounded-[32px] text-emerald-600">
@@ -600,6 +674,7 @@ const NeedsBoard = () => {
             </button>
           ))}
         </div>
+        </>
       )}
     </div>
   );

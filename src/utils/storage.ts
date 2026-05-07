@@ -6,6 +6,7 @@ export const LUMI_STORAGE_KEYS = {
   progress: 'lumi_progress',
   painReports: 'lumi_pain_reports',
   emotionLogs: 'lumi_emotion_logs',
+  needLogs: 'lumi_need_logs',
   planChanges: 'lumi_plan_changes',
   triggerLogs: 'lumi_trigger_logs',
 } as const;
@@ -27,6 +28,7 @@ export const LUMI_STORAGE_DEFAULTS = {
   },
   [LUMI_STORAGE_KEYS.painReports]: [],
   [LUMI_STORAGE_KEYS.emotionLogs]: [],
+  [LUMI_STORAGE_KEYS.needLogs]: [],
   [LUMI_STORAGE_KEYS.planChanges]: {
     items: [],
     activeId: null,
