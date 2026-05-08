@@ -81,6 +81,13 @@ interface LearningSettings {
   duration: string;
 }
 
+interface LearningProgress {
+  vowelsSeen: string[];
+  attempts: number;
+  correctAnswers: number;
+  lastPracticeAt: string | null;
+}
+
 const defaultPlanExamples: PlanChange[] = [
   { id: '1', beforeGoingTo: 'Parque', nowGoingTo: 'Casa', stillTheSame: 'Jugaremos juntos', canDoThis: 'Elegir un juego tranquilo', calmMessage: 'Estoy contigo, vamos paso a paso.' },
   { id: '2', beforeGoingTo: 'Escuela', nowGoingTo: 'Casa', stillTheSame: 'Tu rutina de comida sigue igual', canDoThis: 'Preparar tu espacio favorito', calmMessage: 'Respiramos juntos y seguimos el plan nuevo.' },
@@ -808,6 +815,17 @@ const ProgressSummaryPage = () => {
   const needLogs = getStorageItem<any[]>(LUMI_STORAGE_KEYS.needLogs, []) ?? [];
   const painReports = getStorageItem<PainReport[]>(LUMI_STORAGE_KEYS.painReports, []) ?? [];
   const planChangesState = getStorageItem<PlanChangesState>(LUMI_STORAGE_KEYS.planChanges, { items: [], activeId: null }) ?? { items: [], activeId: null };
+  const learningProgress = getStorageItem<LearningProgress>(LUMI_STORAGE_KEYS.learningProgress, {
+    vowelsSeen: [],
+    attempts: 0,
+    correctAnswers: 0,
+    lastPracticeAt: null,
+  }) ?? {
+    vowelsSeen: [],
+    attempts: 0,
+    correctAnswers: 0,
+    lastPracticeAt: null,
+  };
 
   const routinesCompleted = progressLogs.filter((log) => log.achievement === 'Completé una rutina.').length;
   const calmZoneUses = progressLogs.filter((log) => log.achievement === 'Usé la zona de calma.').length;
@@ -820,6 +838,9 @@ const ProgressSummaryPage = () => {
     { label: 'Veces que usó zona de calma', value: calmZoneUses },
     { label: 'Reportes de dolor', value: painReports.length },
     { label: 'Cambios de planes vistos', value: planChangesViewed || (planChangesState.activeId ? 1 : 0) },
+    { label: 'Vocales practicadas', value: learningProgress.vowelsSeen.length },
+    { label: 'Aciertos (aprendizaje)', value: learningProgress.correctAnswers },
+    { label: 'Intentos (aprendizaje)', value: learningProgress.attempts },
   ];
 
   const hasData = summary.some((item) => item.value > 0);

@@ -71,6 +71,13 @@ interface LearningSettings {
   practiceAreas: string[];
 }
 
+interface LearningProgress {
+  vowelsSeen: string[];
+  attempts: number;
+  correctAnswers: number;
+  lastPracticeAt: string | null;
+}
+
 // --- Helpers ---
 
 const useSpeech = () => {
@@ -1305,24 +1312,141 @@ const LearningModule = () => {
   ] as const;
 
   if (activeSection === 'letras') {
-    const vowels = ['A', 'E', 'I', 'O', 'U'];
+    const vowels = [
+      { letter: 'A', word: 'Avión', emoji: '✈️', phrase: 'A de avión.' },
+      { letter: 'E', word: 'Elefante', emoji: '🐘', phrase: 'E de elefante.' },
+      { letter: 'I', word: 'Iguana', emoji: '🦎', phrase: 'I de iguana.' },
+      { letter: 'O', word: 'Oso', emoji: '🐻', phrase: 'O de oso.' },
+      { letter: 'U', word: 'Uva', emoji: '🍇', phrase: 'U de uva.' },
+    ];
+    const [vowelMode, setVowelMode] = useState<'conoce' | 'toca' | 'empieza'>('conoce');
+    const [targetVowel, setTargetVowel] = useState('A');
+    const [feedback, setFeedback] = useState<string | null>(null);
+    const [startWord, setStartWord] = useState(vowels[0]);
+
+    const updateLearningProgress = (isCorrect: boolean, seenVowel?: string) => {
+      const current = getStorageItem<LearningProgress>(LUMI_STORAGE_KEYS.learningProgress, {
+        vowelsSeen: [],
+        attempts: 0,
+        correctAnswers: 0,
+        lastPracticeAt: null,
+      }) ?? {
+        vowelsSeen: [],
+        attempts: 0,
+        correctAnswers: 0,
+        lastPracticeAt: null,
+      };
+
+      const nextSeen = seenVowel && !current.vowelsSeen.includes(seenVowel) ? [...current.vowelsSeen, seenVowel] : current.vowelsSeen;
+      const nextProgress: LearningProgress = {
+        vowelsSeen: nextSeen,
+        attempts: current.attempts + 1,
+        correctAnswers: current.correctAnswers + (isCorrect ? 1 : 0),
+        lastPracticeAt: new Date().toISOString(),
+      };
+      setStorageItem(LUMI_STORAGE_KEYS.learningProgress, nextProgress);
+    };
+
+    const handleTouchMode = (selected: string) => {
+      if (selected === targetVowel) {
+        setFeedback('Lo lograste');
+        updateLearningProgress(true, selected);
+      } else {
+        setFeedback('Buen intento, probemos otra vez');
+        updateLearningProgress(false);
+      }
+      const next = vowels[Math.floor(Math.random() * vowels.length)];
+      setTargetVowel(next.letter);
+    };
+
+    const handleStartsWith = (selected: string) => {
+      if (selected === startWord.letter) {
+        setFeedback('Lo lograste');
+        updateLearningProgress(true, selected);
+      } else {
+        setFeedback('Buen intento, probemos otra vez');
+        updateLearningProgress(false);
+      }
+      setStartWord(vowels[Math.floor(Math.random() * vowels.length)]);
+    };
+
     return (
       <div className="space-y-8">
         <div className="text-center">
           <h3 className="text-4xl font-child font-bold">Vocales</h3>
-          <p className="text-slate-500 mt-2">Toca las letras para escucharlas</p>
+          <p className="text-slate-500 mt-2">Aprendamos vocales con actividades simples</p>
         </div>
-        <div className="grid grid-cols-2 sm:grid-cols-5 gap-6 max-w-4xl mx-auto">
-          {vowels.map(v => (
-            <button
-              key={v}
-              onClick={() => speak(v)}
-              className="btn-child py-12 text-6xl font-black bg-white border-indigo-100 text-indigo-600 hover:bg-indigo-50"
-            >
-              {v}
-            </button>
-          ))}
+
+        <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 max-w-4xl mx-auto">
+          <button onClick={() => setVowelMode('conoce')} className={cn('btn-child py-4 text-xl', vowelMode === 'conoce' ? 'bg-indigo-100 border-indigo-300 text-indigo-700' : 'bg-white border-slate-100')}>
+            Conoce las vocales
+          </button>
+          <button onClick={() => setVowelMode('toca')} className={cn('btn-child py-4 text-xl', vowelMode === 'toca' ? 'bg-indigo-100 border-indigo-300 text-indigo-700' : 'bg-white border-slate-100')}>
+            Toca la vocal
+          </button>
+          <button onClick={() => setVowelMode('empieza')} className={cn('btn-child py-4 text-xl', vowelMode === 'empieza' ? 'bg-indigo-100 border-indigo-300 text-indigo-700' : 'bg-white border-slate-100')}>
+            ¿Con qué vocal empieza?
+          </button>
         </div>
+
+        {vowelMode === 'conoce' && (
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 max-w-6xl mx-auto">
+            {vowels.map((v) => (
+              <button
+                key={v.letter}
+                onClick={() => {
+                  speak(v.phrase);
+                  const current = getStorageItem<LearningProgress>(LUMI_STORAGE_KEYS.learningProgress, { vowelsSeen: [], attempts: 0, correctAnswers: 0, lastPracticeAt: null }) ?? { vowelsSeen: [], attempts: 0, correctAnswers: 0, lastPracticeAt: null };
+                  if (!current.vowelsSeen.includes(v.letter)) {
+                    setStorageItem(LUMI_STORAGE_KEYS.learningProgress, { ...current, vowelsSeen: [...current.vowelsSeen, v.letter], lastPracticeAt: new Date().toISOString() });
+                  }
+                }}
+                className="card-lumi bg-white border-indigo-100 text-left space-y-3 hover:bg-indigo-50 transition-colors"
+              >
+                <p className="text-6xl font-black text-indigo-600">{v.letter}</p>
+                <p className="text-2xl font-child font-bold text-slate-800">{v.word} {v.emoji}</p>
+                <p className="text-lg text-slate-600">{v.phrase}</p>
+              </button>
+            ))}
+          </div>
+        )}
+
+        {vowelMode === 'toca' && (
+          <div className="max-w-4xl mx-auto space-y-6">
+            <div className="card-lumi text-center bg-indigo-50 border-indigo-100">
+              <p className="text-3xl font-child font-bold text-indigo-800">Toca la vocal {targetVowel}</p>
+            </div>
+            <div className="grid grid-cols-2 sm:grid-cols-5 gap-4">
+              {vowels.map((v) => (
+                <button key={v.letter} onClick={() => handleTouchMode(v.letter)} className="btn-child py-10 text-5xl font-black bg-white border-indigo-100 text-indigo-600">
+                  {v.letter}
+                </button>
+              ))}
+            </div>
+          </div>
+        )}
+
+        {vowelMode === 'empieza' && (
+          <div className="max-w-4xl mx-auto space-y-6">
+            <div className="card-lumi text-center bg-indigo-50 border-indigo-100">
+              <p className="text-3xl font-child font-bold text-indigo-800">{startWord.word}</p>
+              <p className="text-slate-500 mt-2">¿Con qué vocal empieza?</p>
+            </div>
+            <div className="grid grid-cols-2 sm:grid-cols-5 gap-4">
+              {vowels.map((v) => (
+                <button key={v.letter} onClick={() => handleStartsWith(v.letter)} className="btn-child py-10 text-5xl font-black bg-white border-indigo-100 text-indigo-600">
+                  {v.letter}
+                </button>
+              ))}
+            </div>
+          </div>
+        )}
+
+        {feedback && (
+          <div className="max-w-3xl mx-auto text-center bg-lumi-soft-yellow border border-amber-200 rounded-3xl px-6 py-4">
+            <p className="text-amber-800 font-bold text-2xl">{feedback}</p>
+          </div>
+        )}
       </div>
     );
   }
