@@ -67,6 +67,10 @@ interface ProgressLog {
   timestamp: string;
 }
 
+interface LearningSettings {
+  practiceAreas: string[];
+}
+
 // --- Helpers ---
 
 const useSpeech = () => {
@@ -1287,6 +1291,12 @@ const GamesModule = () => {
 const LearningModule = () => {
   const [activeSection, setActiveSection] = useState<string | null>(null);
   const { speak } = useSpeech();
+  const learningSettings = getStorageItem<LearningSettings>(LUMI_STORAGE_KEYS.learningSettings);
+  const recommendedActivity = learningSettings?.practiceAreas?.includes('Vocales')
+    ? 'Vocales'
+    : learningSettings?.practiceAreas?.includes('Números')
+      ? 'Conteo'
+      : null;
   
   const sections = [
     { id: 'letras', title: 'Letras y Vocales', icon: 'SquareDashed', color: 'bg-indigo-100 text-indigo-600', status: 'disponible' },
@@ -1375,6 +1385,11 @@ const LearningModule = () => {
           <h2 className="text-4xl font-child font-bold">Aprendizaje</h2>
           <p className="text-slate-500 mt-2">Divertirse y aprender paso a paso</p>
         </div>
+        {recommendedActivity && (
+          <div className="max-w-3xl mx-auto bg-lumi-soft-green border border-emerald-200 rounded-3xl px-6 py-4 text-center">
+            <p className="text-emerald-800 font-bold text-lg">Actividad recomendada para hoy: {recommendedActivity}</p>
+          </div>
+        )}
 
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-6 max-w-6xl mx-auto">
           {learningCategories.map((category) => (

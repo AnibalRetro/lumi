@@ -73,6 +73,14 @@ interface ProgressLog {
   timestamp: string;
 }
 
+interface LearningSettings {
+  educationalLevel: string;
+  practiceAreas: string[];
+  activityStyle: string;
+  visualSupportLevel: string;
+  duration: string;
+}
+
 const defaultPlanExamples: PlanChange[] = [
   { id: '1', beforeGoingTo: 'Parque', nowGoingTo: 'Casa', stillTheSame: 'Jugaremos juntos', canDoThis: 'Elegir un juego tranquilo', calmMessage: 'Estoy contigo, vamos paso a paso.' },
   { id: '2', beforeGoingTo: 'Escuela', nowGoingTo: 'Casa', stillTheSame: 'Tu rutina de comida sigue igual', canDoThis: 'Preparar tu espacio favorito', calmMessage: 'Respiramos juntos y seguimos el plan nuevo.' },
@@ -92,6 +100,19 @@ const readingLevelOptions = [
 const supportStyleOptions = ['Imágenes', 'Texto', 'Audio', 'Imágenes + texto', 'Imágenes + audio'];
 const sensitivityOptions = ['Ruido', 'Luz', 'Texturas', 'Multitudes', 'Cambios de rutina', 'Contacto físico', 'Olores'];
 const strategyOptions = ['Silencio', 'Audífonos', 'Respirar', 'Tomar agua', 'Descansar', 'Abrazo', 'Estar solo'];
+const educationalLevelOptions = ['Preescolar inicial', 'Preescolar avanzado', 'Primaria básica', 'Refuerzo general'];
+const practiceAreaOptions = ['Vocales', 'Alfabeto', 'Lectura', 'Números', 'Sumas', 'Restas', 'Multiplicaciones', 'Formas', 'Colores', 'Memoria'];
+const activityStyleOptions = ['Tocar respuesta', 'Arrastrar y ordenar', 'Ver y repetir', 'Escuchar y elegir', 'Juego libre'];
+const visualSupportOptions = ['Alto', 'Medio', 'Bajo'];
+const durationOptions = ['5 minutos', '10 minutos', '15 minutos'];
+
+const defaultLearningSettings: LearningSettings = {
+  educationalLevel: educationalLevelOptions[0],
+  practiceAreas: ['Vocales'],
+  activityStyle: activityStyleOptions[0],
+  visualSupportLevel: visualSupportOptions[0],
+  duration: durationOptions[0],
+};
 
 const defaultChildProfile: ChildProfile = {
   avatar: avatarOptions[0],
@@ -163,6 +184,13 @@ const ParentHome = () => {
       desc: 'Consulta un resumen amigable de actividad y logros.',
       icon: <BookText size={32} />,
       color: 'bg-yellow-50 border-yellow-100 text-yellow-700'
+    },
+    {
+      path: 'configuracion-aprendizaje',
+      label: 'Configuración de aprendizaje',
+      desc: 'Define nivel educativo y preferencias para adaptar actividades.',
+      icon: <BookText size={32} />,
+      color: 'bg-teal-50 border-teal-100 text-teal-700'
     },
     {
       path: 'directorio', 
@@ -438,6 +466,99 @@ const AccessibilityPage = () => {
 
         <div className="text-sm text-slate-500 bg-slate-50 border border-slate-200 rounded-2xl p-4">
           Estos ajustes se guardan automáticamente en este dispositivo.
+        </div>
+      </div>
+    </div>
+  );
+};
+
+const LearningSettingsPage = () => {
+  const [settings, setSettings] = useState<LearningSettings>(() => {
+    return getStorageItem<LearningSettings>(LUMI_STORAGE_KEYS.learningSettings, defaultLearningSettings) ?? defaultLearningSettings;
+  });
+  const [saved, setSaved] = useState(false);
+
+  const togglePracticeArea = (value: string) => {
+    setSettings((prev) => {
+      const exists = prev.practiceAreas.includes(value);
+      const nextAreas = exists ? prev.practiceAreas.filter((item) => item !== value) : [...prev.practiceAreas, value];
+      return {
+        ...prev,
+        practiceAreas: nextAreas.length > 0 ? nextAreas : [value],
+      };
+    });
+  };
+
+  const handleSave = () => {
+    setStorageItem(LUMI_STORAGE_KEYS.learningSettings, settings);
+    setSaved(true);
+    setTimeout(() => setSaved(false), 1800);
+  };
+
+  return (
+    <div className="max-w-4xl mx-auto space-y-8">
+      <div className="space-y-2">
+        <h2 className="text-3xl font-bold text-slate-900">Configuración de aprendizaje</h2>
+        <p className="text-slate-500">Ajusta preferencias educativas para personalizar actividades infantiles.</p>
+      </div>
+
+      <div className="card-lumi space-y-8">
+        <label className="space-y-2 block">
+          <span className="text-sm font-semibold text-slate-700">Nivel educativo actual</span>
+          <select value={settings.educationalLevel} onChange={(e) => setSettings((prev) => ({ ...prev, educationalLevel: e.target.value }))} className="w-full bg-white border border-slate-200 rounded-2xl px-4 py-3">
+            {educationalLevelOptions.map((option) => <option key={option}>{option}</option>)}
+          </select>
+        </label>
+
+        <section className="space-y-3">
+          <p className="text-sm font-bold uppercase tracking-widest text-slate-400">Áreas a practicar</p>
+          <div className="flex flex-wrap gap-2">
+            {practiceAreaOptions.map((area) => (
+              <button
+                key={area}
+                type="button"
+                onClick={() => togglePracticeArea(area)}
+                className={cn(
+                  'px-4 py-2 rounded-full border text-sm font-medium transition-all',
+                  settings.practiceAreas.includes(area)
+                    ? 'bg-teal-100 border-teal-300 text-teal-800'
+                    : 'bg-white border-slate-200 text-slate-600'
+                )}
+              >
+                {area}
+              </button>
+            ))}
+          </div>
+        </section>
+
+        <label className="space-y-2 block">
+          <span className="text-sm font-semibold text-slate-700">Estilo de actividad preferido</span>
+          <select value={settings.activityStyle} onChange={(e) => setSettings((prev) => ({ ...prev, activityStyle: e.target.value }))} className="w-full bg-white border border-slate-200 rounded-2xl px-4 py-3">
+            {activityStyleOptions.map((option) => <option key={option}>{option}</option>)}
+          </select>
+        </label>
+
+        <div className="grid md:grid-cols-2 gap-4">
+          <label className="space-y-2">
+            <span className="text-sm font-semibold text-slate-700">Nivel de apoyo visual</span>
+            <select value={settings.visualSupportLevel} onChange={(e) => setSettings((prev) => ({ ...prev, visualSupportLevel: e.target.value }))} className="w-full bg-white border border-slate-200 rounded-2xl px-4 py-3">
+              {visualSupportOptions.map((option) => <option key={option}>{option}</option>)}
+            </select>
+          </label>
+
+          <label className="space-y-2">
+            <span className="text-sm font-semibold text-slate-700">Duración sugerida</span>
+            <select value={settings.duration} onChange={(e) => setSettings((prev) => ({ ...prev, duration: e.target.value }))} className="w-full bg-white border border-slate-200 rounded-2xl px-4 py-3">
+              {durationOptions.map((option) => <option key={option}>{option}</option>)}
+            </select>
+          </label>
+        </div>
+
+        <div className="flex items-center gap-4">
+          <button type="button" onClick={handleSave} className="bg-slate-900 text-white px-6 py-3 rounded-2xl font-bold hover:bg-lumi-olive transition-all">
+            Guardar configuración
+          </button>
+          {saved && <span className="text-sm font-semibold text-emerald-700">Configuración guardada en este dispositivo.</span>}
         </div>
       </div>
     </div>
@@ -916,6 +1037,7 @@ export default function ParentModule() {
         <Route path="/apoyo-casa" element={<div className="text-center py-20"><h2 className="text-3xl font-bold uppercase tracking-widest opacity-20">Contenido en construcción</h2></div>} />
         <Route path="/perfil-nino" element={<ChildProfilePage />} />
         <Route path="/accesibilidad" element={<AccessibilityPage />} />
+        <Route path="/configuracion-aprendizaje" element={<LearningSettingsPage />} />
         <Route path="/historial-me-duele" element={<PainHistoryPage />} />
         <Route path="/cambio-planes" element={<PlanChangesPage />} />
         <Route path="/registro-detonantes" element={<TriggerLogsPage />} />
