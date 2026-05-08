@@ -224,6 +224,60 @@ export interface RoutineSequence {
   steps: { id: string; label: string; icon: string }[];
 }
 
+export interface LearningCategory {
+  id: string;
+  title: string;
+  description: string;
+  icon: string;
+  color: string;
+  level: string;
+  status: 'disponible' | 'proximamente';
+  sectionId?: 'letras' | 'numeros' | 'operaciones' | 'formas-colores' | 'memoria-atencion';
+}
+
+export const learningCategories: LearningCategory[] = [
+  {
+    id: 'letras-lectura',
+    title: 'Letras y lectura',
+    description: 'Reconoce vocales y primeras palabras.',
+    icon: 'BookOpen',
+    color: 'bg-indigo-100 text-indigo-700 border-indigo-200',
+    level: 'Nivel sugerido: Inicial (4+)',
+    status: 'disponible',
+    sectionId: 'letras',
+  },
+  {
+    id: 'numeros-matematicas',
+    title: 'Números y matemáticas',
+    description: 'Conteo básico y reconocimiento de números.',
+    icon: 'Hash',
+    color: 'bg-amber-100 text-amber-700 border-amber-200',
+    level: 'Nivel sugerido: Inicial (4+)',
+    status: 'disponible',
+    sectionId: 'numeros',
+  },
+  {
+    id: 'formas-colores',
+    title: 'Formas y colores',
+    description: 'Identifica figuras y colores cotidianos.',
+    icon: 'Palette',
+    color: 'bg-emerald-100 text-emerald-700 border-emerald-200',
+    level: 'Nivel sugerido: Inicial (4-6)',
+    status: 'proximamente',
+    sectionId: 'formas-colores',
+  },
+  {
+    id: 'memoria-atencion',
+    title: 'Memoria y atención',
+    description: 'Actividades breves para enfocar y recordar.',
+    icon: 'Brain',
+    color: 'bg-rose-100 text-rose-700 border-rose-200',
+    level: 'Nivel sugerido: Intermedio (5+)',
+    status: 'proximamente',
+    sectionId: 'memoria-atencion',
+  },
+];
+
 export const routineSequences: RoutineSequence[] = [
   {
     id: 'brush-teeth',

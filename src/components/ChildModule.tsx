@@ -32,7 +32,7 @@ import {
 } from 'lucide-react';
 import * as Icons from 'lucide-react';
 import { cn } from '../lib/utils';
-import { initialRoutines, emotions, socialStories, gameScenarios, emotionChallenges, routineSequences, RoutineItem } from '../data/mockData';
+import { initialRoutines, emotions, socialStories, gameScenarios, emotionChallenges, routineSequences, learningCategories, RoutineItem } from '../data/mockData';
 import { SettingsContext } from '../App';
 import { getStorageItem, setStorageItem, LUMI_STORAGE_KEYS } from '../utils/storage';
 
@@ -1289,10 +1289,10 @@ const LearningModule = () => {
   const { speak } = useSpeech();
   
   const sections = [
-    { id: 'letras', title: 'Letras y Vocales', icon: 'SquareDashed', color: 'bg-indigo-100 text-indigo-600' },
-    { id: 'numeros', title: 'Números', icon: 'Hash', color: 'bg-amber-100 text-amber-600' },
-    { id: 'operaciones', title: 'Sumas y Restas', icon: 'Plus', color: 'bg-rose-100 text-rose-600' },
-  ];
+    { id: 'letras', title: 'Letras y Vocales', icon: 'SquareDashed', color: 'bg-indigo-100 text-indigo-600', status: 'disponible' },
+    { id: 'numeros', title: 'Números y conteo', icon: 'Hash', color: 'bg-amber-100 text-amber-600', status: 'disponible' },
+    { id: 'operaciones', title: 'Sumas y Restas', icon: 'Plus', color: 'bg-rose-100 text-rose-600', status: 'proximamente' },
+  ] as const;
 
   if (activeSection === 'letras') {
     const vowels = ['A', 'E', 'I', 'O', 'U'];
@@ -1370,28 +1370,78 @@ const LearningModule = () => {
   }
 
   return (
-    <div className="space-y-12">
-      <div className="text-center">
-        <h2 className="text-4xl font-child font-bold">Aprendizaje</h2>
-        <p className="text-slate-500 mt-2">Divertirse y aprender juntos</p>
-      </div>
-      <div className="grid grid-cols-1 sm:grid-cols-3 gap-8 max-w-5xl mx-auto">
-        {sections.map(s => (
-          <button
-            key={s.id}
-            onClick={() => { speak(s.title); setActiveSection(s.id); }}
-            className={cn(
-              "btn-child py-16 flex flex-col items-center gap-6",
-              s.color
-            )}
-          >
-            <div className="bg-white p-6 rounded-[32px] shadow-sm">
-              <IconComponent name={s.icon} size={64} />
-            </div>
-            <span className="text-3xl">{s.title}</span>
-          </button>
-        ))}
-      </div>
+      <div className="space-y-12">
+        <div className="text-center">
+          <h2 className="text-4xl font-child font-bold">Aprendizaje</h2>
+          <p className="text-slate-500 mt-2">Divertirse y aprender paso a paso</p>
+        </div>
+
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-6 max-w-6xl mx-auto">
+          {learningCategories.map((category) => (
+            <button
+              key={category.id}
+              onClick={() => {
+                speak(category.title);
+                if (category.status === 'disponible' && category.sectionId) {
+                  setActiveSection(category.sectionId);
+                } else {
+                  speak('Próximamente');
+                }
+              }}
+              className={cn(
+                "btn-child p-8 text-left border-2 transition-all",
+                category.color,
+                category.status === 'proximamente' && 'opacity-90'
+              )}
+            >
+              <div className="flex items-start justify-between gap-4">
+                <div className="bg-white p-4 rounded-2xl shadow-sm">
+                  <IconComponent name={category.icon} size={40} />
+                </div>
+                <span className={cn(
+                  "text-xs font-bold uppercase tracking-widest px-3 py-1 rounded-full border bg-white",
+                  category.status === 'disponible' ? 'text-emerald-700 border-emerald-200' : 'text-slate-500 border-slate-200'
+                )}>
+                  {category.status === 'disponible' ? 'Disponible' : 'Próximamente'}
+                </span>
+              </div>
+              <div className="mt-4 space-y-2">
+                <h3 className="text-3xl font-child font-bold">{category.title}</h3>
+                <p className="text-base font-medium opacity-80">{category.description}</p>
+                <p className="text-sm font-bold uppercase tracking-wide opacity-70">{category.level}</p>
+              </div>
+            </button>
+          ))}
+        </div>
+
+        <div className="grid grid-cols-1 sm:grid-cols-3 gap-8 max-w-5xl mx-auto">
+          {sections.map(s => (
+            <button
+              key={s.id}
+              onClick={() => {
+                speak(s.title);
+                if (s.status === 'disponible') {
+                  setActiveSection(s.id);
+                } else {
+                  speak('Próximamente');
+                }
+              }}
+              className={cn(
+                "btn-child py-8 flex flex-col items-center gap-4 opacity-70 hover:opacity-100",
+                s.color,
+                s.status === 'proximamente' && 'opacity-50'
+              )}
+            >
+              <div className="bg-white p-5 rounded-[24px] shadow-sm">
+                <IconComponent name={s.icon} size={40} />
+              </div>
+              <span className="text-2xl">{s.title}</span>
+              <span className="text-xs font-bold uppercase tracking-widest">
+                {s.status === 'disponible' ? 'Disponible' : 'Próximamente'}
+              </span>
+            </button>
+          ))}
+        </div>
     </div>
   );
 };
