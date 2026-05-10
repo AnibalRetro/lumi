@@ -83,9 +83,13 @@ interface LearningSettings {
 
 interface LearningProgress {
   vowelsSeen: string[];
+  lettersSeen?: string[];
   attempts: number;
   correctAnswers: number;
   lastPracticeAt: string | null;
+  alphabetAttempts?: number;
+  alphabetCorrectAnswers?: number;
+  alphabetLastPracticeAt?: string | null;
 }
 
 const defaultPlanExamples: PlanChange[] = [
@@ -841,6 +845,9 @@ const ProgressSummaryPage = () => {
     { label: 'Vocales practicadas', value: learningProgress.vowelsSeen.length },
     { label: 'Aciertos (aprendizaje)', value: learningProgress.correctAnswers },
     { label: 'Intentos (aprendizaje)', value: learningProgress.attempts },
+    { label: 'Letras practicadas', value: learningProgress.lettersSeen?.length ?? 0 },
+    { label: 'Aciertos (alfabeto)', value: learningProgress.alphabetCorrectAnswers ?? 0 },
+    { label: 'Intentos (alfabeto)', value: learningProgress.alphabetAttempts ?? 0 },
   ];
 
   const hasData = summary.some((item) => item.value > 0);

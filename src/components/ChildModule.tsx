@@ -73,9 +73,13 @@ interface LearningSettings {
 
 interface LearningProgress {
   vowelsSeen: string[];
+  lettersSeen?: string[];
   attempts: number;
+  alphabetAttempts?: number;
   correctAnswers: number;
+  alphabetCorrectAnswers?: number;
   lastPracticeAt: string | null;
+  alphabetLastPracticeAt?: string | null;
 }
 
 // --- Helpers ---
@@ -1320,9 +1324,30 @@ const LearningModule = () => {
       { letter: 'U', word: 'Uva', emoji: '🍇', phrase: 'U de uva.' },
     ];
     const [vowelMode, setVowelMode] = useState<'conoce' | 'toca' | 'empieza'>('conoce');
+    const [letterActivity, setLetterActivity] = useState<'vocales' | 'alfabeto'>('vocales');
     const [targetVowel, setTargetVowel] = useState('A');
     const [feedback, setFeedback] = useState<string | null>(null);
     const [startWord, setStartWord] = useState(vowels[0]);
+    const alphabetLetters = [
+      { upper: 'A', lower: 'a', word: 'avión', emoji: '✈️' }, { upper: 'B', lower: 'b', word: 'barco', emoji: '🚢' },
+      { upper: 'C', lower: 'c', word: 'casa', emoji: '🏠' }, { upper: 'D', lower: 'd', word: 'dado', emoji: '🎲' },
+      { upper: 'E', lower: 'e', word: 'elefante', emoji: '🐘' }, { upper: 'F', lower: 'f', word: 'flor', emoji: '🌸' },
+      { upper: 'G', lower: 'g', word: 'gato', emoji: '🐱' }, { upper: 'H', lower: 'h', word: 'helado', emoji: '🍦' },
+      { upper: 'I', lower: 'i', word: 'iguana', emoji: '🦎' }, { upper: 'J', lower: 'j', word: 'jugo', emoji: '🧃' },
+      { upper: 'K', lower: 'k', word: 'kiwi', emoji: '🥝' }, { upper: 'L', lower: 'l', word: 'luna', emoji: '🌙' },
+      { upper: 'M', lower: 'm', word: 'mamá', emoji: '👩' }, { upper: 'N', lower: 'n', word: 'nube', emoji: '☁️' },
+      { upper: 'Ñ', lower: 'ñ', word: 'ñu', emoji: '🦬' }, { upper: 'O', lower: 'o', word: 'oso', emoji: '🐻' },
+      { upper: 'P', lower: 'p', word: 'pelota', emoji: '⚽' }, { upper: 'Q', lower: 'q', word: 'queso', emoji: '🧀' },
+      { upper: 'R', lower: 'r', word: 'rana', emoji: '🐸' }, { upper: 'S', lower: 's', word: 'sol', emoji: '☀️' },
+      { upper: 'T', lower: 't', word: 'tren', emoji: '🚂' }, { upper: 'U', lower: 'u', word: 'uva', emoji: '🍇' },
+      { upper: 'V', lower: 'v', word: 'vaca', emoji: '🐮' }, { upper: 'W', lower: 'w', word: 'waffle', emoji: '🧇' },
+      { upper: 'X', lower: 'x', word: 'xilófono', emoji: '🎼' }, { upper: 'Y', lower: 'y', word: 'yoyo', emoji: '🪀' },
+      { upper: 'Z', lower: 'z', word: 'zorro', emoji: '🦊' },
+    ];
+    const [alphabetMode, setAlphabetMode] = useState<'explorar' | 'encuentra' | 'empieza'>('explorar');
+    const [targetLetter, setTargetLetter] = useState('M');
+    const [alphabetWord, setAlphabetWord] = useState(alphabetLetters.find((item) => item.upper === 'S') ?? alphabetLetters[0]);
+    const [alphabetOptions, setAlphabetOptions] = useState<string[]>(['S', 'M', 'P', 'L']);
 
     const updateLearningProgress = (isCorrect: boolean, seenVowel?: string) => {
       const current = getStorageItem<LearningProgress>(LUMI_STORAGE_KEYS.learningProgress, {
@@ -1340,11 +1365,46 @@ const LearningModule = () => {
       const nextSeen = seenVowel && !current.vowelsSeen.includes(seenVowel) ? [...current.vowelsSeen, seenVowel] : current.vowelsSeen;
       const nextProgress: LearningProgress = {
         vowelsSeen: nextSeen,
+        lettersSeen: current.lettersSeen ?? [],
         attempts: current.attempts + 1,
+        alphabetAttempts: current.alphabetAttempts ?? 0,
         correctAnswers: current.correctAnswers + (isCorrect ? 1 : 0),
+        alphabetCorrectAnswers: current.alphabetCorrectAnswers ?? 0,
         lastPracticeAt: new Date().toISOString(),
+        alphabetLastPracticeAt: current.alphabetLastPracticeAt ?? null,
       };
       setStorageItem(LUMI_STORAGE_KEYS.learningProgress, nextProgress);
+    };
+
+    const updateAlphabetProgress = (isCorrect: boolean, seenLetter?: string) => {
+      const current = getStorageItem<LearningProgress>(LUMI_STORAGE_KEYS.learningProgress, {
+        vowelsSeen: [],
+        lettersSeen: [],
+        attempts: 0,
+        alphabetAttempts: 0,
+        correctAnswers: 0,
+        alphabetCorrectAnswers: 0,
+        lastPracticeAt: null,
+        alphabetLastPracticeAt: null,
+      }) ?? {
+        vowelsSeen: [],
+        lettersSeen: [],
+        attempts: 0,
+        alphabetAttempts: 0,
+        correctAnswers: 0,
+        alphabetCorrectAnswers: 0,
+        lastPracticeAt: null,
+        alphabetLastPracticeAt: null,
+      };
+      const currentLetters = current.lettersSeen ?? [];
+      const nextLetters = seenLetter && !currentLetters.includes(seenLetter) ? [...currentLetters, seenLetter] : currentLetters;
+      setStorageItem(LUMI_STORAGE_KEYS.learningProgress, {
+        ...current,
+        lettersSeen: nextLetters,
+        alphabetAttempts: (current.alphabetAttempts ?? 0) + 1,
+        alphabetCorrectAnswers: (current.alphabetCorrectAnswers ?? 0) + (isCorrect ? 1 : 0),
+        alphabetLastPracticeAt: new Date().toISOString(),
+      });
     };
 
     const handleTouchMode = (selected: string) => {
@@ -1370,13 +1430,59 @@ const LearningModule = () => {
       setStartWord(vowels[Math.floor(Math.random() * vowels.length)]);
     };
 
+    const pickAlphabetChallenge = () => {
+      const picked = alphabetLetters[Math.floor(Math.random() * alphabetLetters.length)];
+      setTargetLetter(picked.upper);
+      const pool = alphabetLetters.filter((item) => item.upper !== picked.upper).sort(() => Math.random() - 0.5).slice(0, 3).map((item) => item.upper);
+      setAlphabetOptions([picked.upper, ...pool].sort(() => Math.random() - 0.5));
+    };
+
+    const handleFindLetter = (selected: string) => {
+      if (selected === targetLetter) {
+        setFeedback('Lo lograste');
+        updateAlphabetProgress(true, selected);
+      } else {
+        setFeedback('Buen intento, probemos otra vez');
+        updateAlphabetProgress(false);
+      }
+      pickAlphabetChallenge();
+    };
+
+    const pickStartWordChallenge = () => {
+      const picked = alphabetLetters[Math.floor(Math.random() * alphabetLetters.length)];
+      setAlphabetWord(picked);
+      const pool = alphabetLetters.filter((item) => item.upper !== picked.upper).sort(() => Math.random() - 0.5).slice(0, 3).map((item) => item.upper);
+      setAlphabetOptions([picked.upper, ...pool].sort(() => Math.random() - 0.5));
+    };
+
+    const handleAlphabetStartsWith = (selected: string) => {
+      if (selected === alphabetWord.upper) {
+        setFeedback('Lo lograste');
+        updateAlphabetProgress(true, selected);
+      } else {
+        setFeedback('Buen intento, probemos otra vez');
+        updateAlphabetProgress(false);
+      }
+      pickStartWordChallenge();
+    };
+
     return (
       <div className="space-y-8">
         <div className="text-center">
           <h3 className="text-4xl font-child font-bold">Vocales</h3>
           <p className="text-slate-500 mt-2">Aprendamos vocales con actividades simples</p>
         </div>
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 max-w-3xl mx-auto">
+          <button onClick={() => setLetterActivity('vocales')} className={cn('btn-child py-4 text-xl', letterActivity === 'vocales' ? 'bg-blue-100 border-blue-300 text-blue-700' : 'bg-white border-slate-100')}>
+            Vocales
+          </button>
+          <button onClick={() => setLetterActivity('alfabeto')} className={cn('btn-child py-4 text-xl', letterActivity === 'alfabeto' ? 'bg-blue-100 border-blue-300 text-blue-700' : 'bg-white border-slate-100')}>
+            Alfabeto
+          </button>
+        </div>
 
+        {letterActivity === 'vocales' && (
+          <>
         <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 max-w-4xl mx-auto">
           <button onClick={() => setVowelMode('conoce')} className={cn('btn-child py-4 text-xl', vowelMode === 'conoce' ? 'bg-indigo-100 border-indigo-300 text-indigo-700' : 'bg-white border-slate-100')}>
             Conoce las vocales
@@ -1445,6 +1551,50 @@ const LearningModule = () => {
         {feedback && (
           <div className="max-w-3xl mx-auto text-center bg-lumi-soft-yellow border border-amber-200 rounded-3xl px-6 py-4">
             <p className="text-amber-800 font-bold text-2xl">{feedback}</p>
+          </div>
+        )}
+          </>
+        )}
+        {letterActivity === 'alfabeto' && (
+          <div className="space-y-6">
+            <div className="text-center">
+              <h4 className="text-3xl font-child font-bold">Alfabeto</h4>
+              <p className="text-slate-500">Reconozcamos letras y palabras</p>
+            </div>
+            <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 max-w-4xl mx-auto">
+              <button onClick={() => setAlphabetMode('explorar')} className={cn('btn-child py-4 text-xl', alphabetMode === 'explorar' ? 'bg-indigo-100 border-indigo-300 text-indigo-700' : 'bg-white border-slate-100')}>Explorar letras</button>
+              <button onClick={() => { setAlphabetMode('encuentra'); pickAlphabetChallenge(); }} className={cn('btn-child py-4 text-xl', alphabetMode === 'encuentra' ? 'bg-indigo-100 border-indigo-300 text-indigo-700' : 'bg-white border-slate-100')}>Encuentra la letra</button>
+              <button onClick={() => { setAlphabetMode('empieza'); pickStartWordChallenge(); }} className={cn('btn-child py-4 text-xl', alphabetMode === 'empieza' ? 'bg-indigo-100 border-indigo-300 text-indigo-700' : 'bg-white border-slate-100')}>¿Con qué letra empieza?</button>
+            </div>
+            {alphabetMode === 'explorar' && (
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 max-w-6xl mx-auto">
+                {alphabetLetters.map((item) => (
+                  <button key={item.upper} onClick={() => { speak(`${item.upper} de ${item.word}`); updateAlphabetProgress(true, item.upper); }} className="card-lumi bg-white border-indigo-100 text-left space-y-2 hover:bg-indigo-50 transition-colors">
+                    <p className="text-5xl font-black text-indigo-600">{item.upper} <span className="text-3xl font-bold text-slate-500">{item.lower}</span></p>
+                    <p className="text-2xl font-child font-bold text-slate-800">{item.word} {item.emoji}</p>
+                  </button>
+                ))}
+              </div>
+            )}
+            {alphabetMode === 'encuentra' && (
+              <div className="max-w-4xl mx-auto space-y-4">
+                <div className="card-lumi text-center bg-indigo-50 border-indigo-100"><p className="text-3xl font-child font-bold text-indigo-800">Toca la letra {targetLetter}</p></div>
+                <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
+                  {alphabetOptions.map((opt) => <button key={opt} onClick={() => handleFindLetter(opt)} className="btn-child py-8 text-4xl font-black bg-white border-indigo-100 text-indigo-600">{opt}</button>)}
+                </div>
+              </div>
+            )}
+            {alphabetMode === 'empieza' && (
+              <div className="max-w-4xl mx-auto space-y-4">
+                <div className="card-lumi text-center bg-indigo-50 border-indigo-100">
+                  <p className="text-4xl font-child font-bold text-indigo-800">{alphabetWord.word}</p>
+                  <p className="text-slate-500 mt-2">¿Con qué letra empieza?</p>
+                </div>
+                <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
+                  {alphabetOptions.map((opt) => <button key={opt} onClick={() => handleAlphabetStartsWith(opt)} className="btn-child py-8 text-4xl font-black bg-white border-indigo-100 text-indigo-600">{opt}</button>)}
+                </div>
+              </div>
+            )}
           </div>
         )}
       </div>
