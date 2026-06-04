@@ -1306,6 +1306,30 @@ const GamesModule = () => {
 const LearningModule = () => {
   const [activeSection, setActiveSection] = useState<string | null>(null);
   const { speak } = useSpeech();
+  const { settings } = useContext(SettingsContext);
+  const playFeedbackTone = useCallback((isSuccess: boolean) => {
+    if (!settings.soundEnabled) return;
+    const AudioContextClass = window.AudioContext || (window as Window & typeof globalThis & { webkitAudioContext?: typeof AudioContext }).webkitAudioContext;
+    if (!AudioContextClass) return;
+
+    const audioContext = new AudioContextClass();
+    const oscillator = audioContext.createOscillator();
+    const gain = audioContext.createGain();
+    const now = audioContext.currentTime;
+
+    oscillator.type = 'sine';
+    oscillator.frequency.setValueAtTime(isSuccess ? 523.25 : 220, now);
+    if (isSuccess) oscillator.frequency.setValueAtTime(659.25, now + 0.08);
+    gain.gain.setValueAtTime(0.0001, now);
+    gain.gain.exponentialRampToValueAtTime(0.045, now + 0.02);
+    gain.gain.exponentialRampToValueAtTime(0.0001, now + (isSuccess ? 0.18 : 0.14));
+
+    oscillator.connect(gain);
+    gain.connect(audioContext.destination);
+    oscillator.start(now);
+    oscillator.stop(now + (isSuccess ? 0.2 : 0.16));
+    oscillator.addEventListener('ended', () => audioContext.close());
+  }, [settings.soundEnabled]);
   const learningSettings = getStorageItem<LearningSettings>(LUMI_STORAGE_KEYS.learningSettings);
   const recommendedActivity = learningSettings?.practiceAreas?.includes('Vocales')
     ? 'Vocales'
@@ -1507,11 +1531,13 @@ const LearningModule = () => {
     const handleTouchMode = (selected: string) => {
       if (selected === targetVowel) {
         setFeedback('Lo lograste');
-        speak(`${selected}. Lo lograste`);
+        speak(selected);
+        playFeedbackTone(true);
         updateLearningProgress(true, selected);
       } else {
         setFeedback('Buen intento, probemos otra vez');
-        speak(`${selected}. Buen intento, probemos otra vez`);
+        speak(selected);
+        playFeedbackTone(false);
         updateLearningProgress(false);
       }
       const next = vowels[Math.floor(Math.random() * vowels.length)];
@@ -1521,11 +1547,13 @@ const LearningModule = () => {
     const handleStartsWith = (selected: string) => {
       if (selected === startWord.letter) {
         setFeedback('Lo lograste');
-        speak(`${selected}. Lo lograste`);
+        speak(selected);
+        playFeedbackTone(true);
         updateLearningProgress(true, selected);
       } else {
         setFeedback('Buen intento, probemos otra vez');
-        speak(`${selected}. Buen intento, probemos otra vez`);
+        speak(selected);
+        playFeedbackTone(false);
         updateLearningProgress(false);
       }
       setStartWord(vowelWordExamples[Math.floor(Math.random() * vowelWordExamples.length)]);
@@ -1541,11 +1569,13 @@ const LearningModule = () => {
     const handleFindLetter = (selected: string) => {
       if (selected === targetLetter) {
         setFeedback('Lo lograste');
-        speak(`${selected}. Lo lograste`);
+        speak(selected);
+        playFeedbackTone(true);
         updateAlphabetProgress(true, selected);
       } else {
         setFeedback('Buen intento, probemos otra vez');
-        speak(`${selected}. Buen intento, probemos otra vez`);
+        speak(selected);
+        playFeedbackTone(false);
         updateAlphabetProgress(false);
       }
       pickAlphabetChallenge();
@@ -1561,11 +1591,13 @@ const LearningModule = () => {
     const handleAlphabetStartsWith = (selected: string) => {
       if (selected === alphabetWord.upper) {
         setFeedback('Lo lograste');
-        speak(`${selected}. Lo lograste`);
+        speak(selected);
+        playFeedbackTone(true);
         updateAlphabetProgress(true, selected);
       } else {
         setFeedback('Buen intento, probemos otra vez');
-        speak(`${selected}. Buen intento, probemos otra vez`);
+        speak(selected);
+        playFeedbackTone(false);
         updateAlphabetProgress(false);
       }
       pickStartWordChallenge();
@@ -1585,11 +1617,13 @@ const LearningModule = () => {
     const handleFindSyllable = (selected: string) => {
       if (selected === targetSyllable) {
         setFeedback('Lo lograste');
-        speak(`${selected}. Lo lograste`);
+        speak(selected);
+        playFeedbackTone(true);
         updateSyllableProgress(true, selected);
       } else {
         setFeedback('Buen intento, probemos otra vez');
-        speak(`${selected}. Buen intento, probemos otra vez`);
+        speak(selected);
+        playFeedbackTone(false);
         updateSyllableProgress(false);
       }
       pickSyllableChallenge();
@@ -1609,11 +1643,13 @@ const LearningModule = () => {
     const handleSyllableWordMatch = (selected: string) => {
       if (selected === syllableWord.syllable) {
         setFeedback('Lo lograste');
-        speak(`${selected}. Lo lograste`);
+        speak(selected);
+        playFeedbackTone(true);
         updateSyllableProgress(true, selected);
       } else {
         setFeedback('Buen intento, probemos otra vez');
-        speak(`${selected}. Buen intento, probemos otra vez`);
+        speak(selected);
+        playFeedbackTone(false);
         updateSyllableProgress(false);
       }
       pickSyllableWordChallenge();
