@@ -1312,6 +1312,7 @@ const LearningModule = () => {
   const sections = [
     { id: 'letras', title: 'Letras y Vocales', icon: 'SquareDashed', color: 'bg-indigo-100 text-indigo-600', status: 'disponible' },
     { id: 'numeros', title: 'Números y conteo', icon: 'Hash', color: 'bg-amber-100 text-amber-600', status: 'disponible' },
+    { id: 'calendario', title: 'Días y meses', icon: 'Calendar', color: 'bg-sky-100 text-sky-600', status: 'disponible' },
     { id: 'operaciones', title: 'Sumas y Restas', icon: 'Plus', color: 'bg-rose-100 text-rose-600', status: 'proximamente' },
   ] as const;
 
@@ -1626,6 +1627,86 @@ const LearningModule = () => {
     );
   }
 
+  if (activeSection === 'calendario') {
+    const weekDays = [
+      { name: 'Lunes', emoji: '🌱', phrase: 'Lunes inicia una nueva semana.' },
+      { name: 'Martes', emoji: '🎨', phrase: 'Martes podemos aprender algo nuevo.' },
+      { name: 'Miércoles', emoji: '📚', phrase: 'Miércoles está a la mitad de la semana.' },
+      { name: 'Jueves', emoji: '🌼', phrase: 'Jueves seguimos paso a paso.' },
+      { name: 'Viernes', emoji: '⭐', phrase: 'Viernes termina la semana escolar.' },
+      { name: 'Sábado', emoji: '🧸', phrase: 'Sábado puede ser día de descanso o juego.' },
+      { name: 'Domingo', emoji: '☀️', phrase: 'Domingo puede ser día tranquilo en familia.' },
+    ];
+    const months = [
+      { name: 'Enero', emoji: '❄️', phrase: 'Enero empieza el año.' },
+      { name: 'Febrero', emoji: '💛', phrase: 'Febrero es el segundo mes.' },
+      { name: 'Marzo', emoji: '🌷', phrase: 'Marzo trae cambios de estación.' },
+      { name: 'Abril', emoji: '🌧️', phrase: 'Abril es el cuarto mes.' },
+      { name: 'Mayo', emoji: '🌸', phrase: 'Mayo llega con flores.' },
+      { name: 'Junio', emoji: '🌤️', phrase: 'Junio está a la mitad del año.' },
+      { name: 'Julio', emoji: '🏖️', phrase: 'Julio es el séptimo mes.' },
+      { name: 'Agosto', emoji: '🌻', phrase: 'Agosto sigue en verano.' },
+      { name: 'Septiembre', emoji: '🍂', phrase: 'Septiembre inicia una nueva parte del año.' },
+      { name: 'Octubre', emoji: '🎃', phrase: 'Octubre es el décimo mes.' },
+      { name: 'Noviembre', emoji: '🕯️', phrase: 'Noviembre está cerca del final del año.' },
+      { name: 'Diciembre', emoji: '🎁', phrase: 'Diciembre cierra el año.' },
+    ];
+
+    return (
+      <div className="space-y-10">
+        <div className="text-center max-w-3xl mx-auto">
+          <h3 className="text-4xl font-child font-bold">Días y meses</h3>
+          <p className="text-slate-500 mt-2">Aprendamos el tiempo con tarjetas tranquilas y visuales</p>
+        </div>
+
+        <section className="space-y-4">
+          <div className="card-lumi bg-sky-50 border-sky-100 text-center max-w-3xl mx-auto">
+            <Calendar size={44} className="mx-auto text-sky-600 mb-3" />
+            <h4 className="text-3xl font-child font-bold text-sky-800">Días de la semana</h4>
+            <p className="text-slate-600 mt-2">Los días se repiten: uno después de otro.</p>
+          </div>
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 max-w-6xl mx-auto">
+            {weekDays.map((day) => (
+              <button
+                key={day.name}
+                onClick={() => speak(`${day.name}. ${day.phrase}`)}
+                className="card-lumi bg-white border-sky-100 text-left space-y-2 hover:bg-sky-50 transition-colors"
+              >
+                <p className="text-4xl" aria-hidden="true">{day.emoji}</p>
+                <h5 className="text-2xl font-child font-bold text-sky-800">{day.name}</h5>
+                <p className="text-slate-600">{day.phrase}</p>
+              </button>
+            ))}
+          </div>
+        </section>
+
+        <section className="space-y-4">
+          <div className="card-lumi bg-emerald-50 border-emerald-100 text-center max-w-3xl mx-auto">
+            <h4 className="text-3xl font-child font-bold text-emerald-800">Meses del año</h4>
+            <p className="text-slate-600 mt-2">Doce meses forman un año completo.</p>
+          </div>
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 max-w-6xl mx-auto">
+            {months.map((month, index) => (
+              <button
+                key={month.name}
+                onClick={() => speak(`${month.name}. ${month.phrase}`)}
+                className="card-lumi bg-white border-emerald-100 text-left space-y-2 hover:bg-emerald-50 transition-colors"
+              >
+                <div className="flex items-center justify-between gap-3">
+                  <p className="text-4xl" aria-hidden="true">{month.emoji}</p>
+                  <span className="text-sm font-bold text-emerald-700 bg-emerald-50 border border-emerald-100 rounded-full px-3 py-1">Mes {index + 1}</span>
+                </div>
+                <h5 className="text-2xl font-child font-bold text-emerald-800">{month.name}</h5>
+                <p className="text-slate-600">{month.phrase}</p>
+              </button>
+            ))}
+          </div>
+        </section>
+      </div>
+    );
+  }
+
+
   if (activeSection === 'operaciones') {
     return (
       <div className="space-y-8">
@@ -1705,7 +1786,7 @@ const LearningModule = () => {
           ))}
         </div>
 
-        <div className="grid grid-cols-1 sm:grid-cols-3 gap-8 max-w-5xl mx-auto">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-8 max-w-6xl mx-auto">
           {sections.map(s => (
             <button
               key={s.id}
