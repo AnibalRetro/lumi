@@ -87,18 +87,22 @@ interface LearningProgress {
   syllablesSeen?: string[];
   readingWordsSeen?: string[];
   readingPhrasesSeen?: string[];
+  numbersSeen?: number[];
   attempts: number;
   correctAnswers: number;
   lastPracticeAt: string | null;
   alphabetAttempts?: number;
   syllableAttempts?: number;
   readingAttempts?: number;
+  numberAttempts?: number;
   alphabetCorrectAnswers?: number;
   syllableCorrectAnswers?: number;
   readingCorrectAnswers?: number;
+  numberCorrectAnswers?: number;
   alphabetLastPracticeAt?: string | null;
   syllableLastPracticeAt?: string | null;
   readingLastPracticeAt?: string | null;
+  numberLastPracticeAt?: string | null;
 }
 
 const defaultPlanExamples: PlanChange[] = [
@@ -864,6 +868,9 @@ const ProgressSummaryPage = () => {
     { label: 'Frases leídas', value: learningProgress.readingPhrasesSeen?.length ?? 0 },
     { label: 'Aciertos (lectura)', value: learningProgress.readingCorrectAnswers ?? 0 },
     { label: 'Intentos (lectura)', value: learningProgress.readingAttempts ?? 0 },
+    { label: 'Números practicados', value: learningProgress.numbersSeen?.length ?? 0 },
+    { label: 'Aciertos (números)', value: learningProgress.numberCorrectAnswers ?? 0 },
+    { label: 'Intentos (números)', value: learningProgress.numberAttempts ?? 0 },
   ];
 
   const hasData = summary.some((item) => item.value > 0);

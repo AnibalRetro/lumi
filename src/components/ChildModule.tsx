@@ -77,18 +77,22 @@ interface LearningProgress {
   syllablesSeen?: string[];
   readingWordsSeen?: string[];
   readingPhrasesSeen?: string[];
+  numbersSeen?: number[];
   attempts: number;
   alphabetAttempts?: number;
   syllableAttempts?: number;
   readingAttempts?: number;
+  numberAttempts?: number;
   correctAnswers: number;
   alphabetCorrectAnswers?: number;
   syllableCorrectAnswers?: number;
   readingCorrectAnswers?: number;
+  numberCorrectAnswers?: number;
   lastPracticeAt: string | null;
   alphabetLastPracticeAt?: string | null;
   syllableLastPracticeAt?: string | null;
   readingLastPracticeAt?: string | null;
+  numberLastPracticeAt?: string | null;
 }
 
 // --- Helpers ---
@@ -1440,6 +1444,19 @@ const LearningModule = () => {
   const [readingImageWord, setReadingImageWord] = useState(readingWords[2]);
   const [readingWordOptions, setReadingWordOptions] = useState<string[]>(['sol', 'casa', 'luna']);
   const [readingPhraseIndex, setReadingPhraseIndex] = useState(0);
+  const numberCards = Array.from({ length: 10 }, (_, index) => {
+    const value = index + 1;
+    return {
+      value,
+      objects: Array.from({ length: value }, () => '🍎').join(' '),
+      text: `${value} ${value === 1 ? 'manzana' : 'manzanas'}`,
+    };
+  });
+  const [numberMode, setNumberMode] = useState<'conoce' | 'cuenta' | 'toca'>('conoce');
+  const [countChallenge, setCountChallenge] = useState(numberCards[2]);
+  const [countOptions, setCountOptions] = useState<number[]>([2, 3, 4]);
+  const [targetNumber, setTargetNumber] = useState(5);
+  const [numberOptions, setNumberOptions] = useState<number[]>([3, 5, 8]);
 
   useEffect(() => {
     if (!feedback) return;
@@ -1470,18 +1487,22 @@ const LearningModule = () => {
         syllablesSeen: current.syllablesSeen ?? [],
         readingWordsSeen: current.readingWordsSeen ?? [],
         readingPhrasesSeen: current.readingPhrasesSeen ?? [],
+        numbersSeen: current.numbersSeen ?? [],
         attempts: current.attempts + 1,
         alphabetAttempts: current.alphabetAttempts ?? 0,
         syllableAttempts: current.syllableAttempts ?? 0,
         readingAttempts: current.readingAttempts ?? 0,
+        numberAttempts: current.numberAttempts ?? 0,
         correctAnswers: current.correctAnswers + (isCorrect ? 1 : 0),
         alphabetCorrectAnswers: current.alphabetCorrectAnswers ?? 0,
         syllableCorrectAnswers: current.syllableCorrectAnswers ?? 0,
         readingCorrectAnswers: current.readingCorrectAnswers ?? 0,
+        numberCorrectAnswers: current.numberCorrectAnswers ?? 0,
         lastPracticeAt: new Date().toISOString(),
         alphabetLastPracticeAt: current.alphabetLastPracticeAt ?? null,
         syllableLastPracticeAt: current.syllableLastPracticeAt ?? null,
         readingLastPracticeAt: current.readingLastPracticeAt ?? null,
+        numberLastPracticeAt: current.numberLastPracticeAt ?? null,
       };
       setStorageItem(LUMI_STORAGE_KEYS.learningProgress, nextProgress);
     };
@@ -2034,27 +2055,175 @@ const LearningModule = () => {
   }
 
   if (activeSection === 'numeros') {
-    const nums = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10];
+    const updateNumberProgress = (isCorrect: boolean, seenNumber?: number, countAttempt = true) => {
+      const current = getStorageItem<LearningProgress>(LUMI_STORAGE_KEYS.learningProgress, {
+        vowelsSeen: [],
+        lettersSeen: [],
+        syllablesSeen: [],
+        readingWordsSeen: [],
+        readingPhrasesSeen: [],
+        numbersSeen: [],
+        attempts: 0,
+        alphabetAttempts: 0,
+        syllableAttempts: 0,
+        readingAttempts: 0,
+        numberAttempts: 0,
+        correctAnswers: 0,
+        alphabetCorrectAnswers: 0,
+        syllableCorrectAnswers: 0,
+        readingCorrectAnswers: 0,
+        numberCorrectAnswers: 0,
+        lastPracticeAt: null,
+        alphabetLastPracticeAt: null,
+        syllableLastPracticeAt: null,
+        readingLastPracticeAt: null,
+        numberLastPracticeAt: null,
+      }) ?? {
+        vowelsSeen: [],
+        lettersSeen: [],
+        syllablesSeen: [],
+        readingWordsSeen: [],
+        readingPhrasesSeen: [],
+        numbersSeen: [],
+        attempts: 0,
+        alphabetAttempts: 0,
+        syllableAttempts: 0,
+        readingAttempts: 0,
+        numberAttempts: 0,
+        correctAnswers: 0,
+        alphabetCorrectAnswers: 0,
+        syllableCorrectAnswers: 0,
+        readingCorrectAnswers: 0,
+        numberCorrectAnswers: 0,
+        lastPracticeAt: null,
+        alphabetLastPracticeAt: null,
+        syllableLastPracticeAt: null,
+        readingLastPracticeAt: null,
+        numberLastPracticeAt: null,
+      };
+      const currentNumbers = current.numbersSeen ?? [];
+      setStorageItem(LUMI_STORAGE_KEYS.learningProgress, {
+        ...current,
+        numbersSeen: seenNumber && !currentNumbers.includes(seenNumber) ? [...currentNumbers, seenNumber] : currentNumbers,
+        numberAttempts: (current.numberAttempts ?? 0) + (countAttempt ? 1 : 0),
+        numberCorrectAnswers: (current.numberCorrectAnswers ?? 0) + (countAttempt && isCorrect ? 1 : 0),
+        numberLastPracticeAt: new Date().toISOString(),
+      });
+    };
+
+    const pickCountChallenge = () => {
+      const picked = numberCards[Math.floor(Math.random() * numberCards.length)];
+      const pool = numberCards
+        .filter((item) => item.value !== picked.value)
+        .sort(() => Math.random() - 0.5)
+        .slice(0, 2)
+        .map((item) => item.value);
+      setCountChallenge(picked);
+      setCountOptions([picked.value, ...pool].sort((a, b) => a - b));
+    };
+
+    const pickNumberChallenge = () => {
+      const picked = numberCards[Math.floor(Math.random() * numberCards.length)].value;
+      const pool = numberCards
+        .filter((item) => item.value !== picked)
+        .sort(() => Math.random() - 0.5)
+        .slice(0, 2)
+        .map((item) => item.value);
+      setTargetNumber(picked);
+      setNumberOptions([picked, ...pool].sort((a, b) => a - b));
+    };
+
+    const handleCountAnswer = (selected: number) => {
+      if (selected === countChallenge.value) {
+        setFeedback('Lo lograste');
+        speak(String(selected));
+        playFeedbackTone(true);
+        updateNumberProgress(true, countChallenge.value);
+      } else {
+        setFeedback('Buen intento, contemos otra vez');
+        speak(String(selected));
+        playFeedbackTone(false);
+        updateNumberProgress(false, countChallenge.value);
+      }
+      pickCountChallenge();
+    };
+
+    const handleNumberAnswer = (selected: number) => {
+      if (selected === targetNumber) {
+        setFeedback('Lo lograste');
+        speak(String(selected));
+        playFeedbackTone(true);
+        updateNumberProgress(true, selected);
+      } else {
+        setFeedback('Buen intento, contemos otra vez');
+        speak(String(selected));
+        playFeedbackTone(false);
+        updateNumberProgress(false, targetNumber);
+      }
+      pickNumberChallenge();
+    };
+
     return (
       <div className="space-y-8">
         <div className="text-center">
-          <h3 className="text-4xl font-child font-bold">Números</h3>
-          <p className="text-slate-500 mt-2">¿Cuánto es?</p>
+          <h3 className="text-4xl font-child font-bold">Números y conteo</h3>
+          <p className="text-slate-500 mt-2">Aprendamos números, cantidades y conteo</p>
         </div>
-        <div className="grid grid-cols-2 sm:grid-cols-5 gap-6 max-w-4xl mx-auto">
-          {nums.map(n => (
-            <button
-              key={n}
-              onClick={() => speak(String(n))}
-              className="btn-child py-12 text-6xl font-black bg-white border-amber-100 text-amber-600 hover:bg-amber-50"
-            >
-              {n}
-            </button>
-          ))}
+
+        <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 max-w-4xl mx-auto">
+          <button onClick={() => setNumberMode('conoce')} className={cn('btn-child py-4 text-xl', numberMode === 'conoce' ? 'bg-amber-100 border-amber-300 text-amber-700' : 'bg-white border-slate-100')}>Conoce los números</button>
+          <button onClick={() => { setNumberMode('cuenta'); pickCountChallenge(); }} className={cn('btn-child py-4 text-xl', numberMode === 'cuenta' ? 'bg-amber-100 border-amber-300 text-amber-700' : 'bg-white border-slate-100')}>Cuenta los objetos</button>
+          <button onClick={() => { setNumberMode('toca'); pickNumberChallenge(); }} className={cn('btn-child py-4 text-xl', numberMode === 'toca' ? 'bg-amber-100 border-amber-300 text-amber-700' : 'bg-white border-slate-100')}>Toca el número</button>
         </div>
+
+        {numberMode === 'conoce' && (
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-4 max-w-6xl mx-auto">
+            {numberCards.map((item) => (
+              <button
+                key={item.value}
+                onClick={() => { speak(String(item.value)); updateNumberProgress(true, item.value, false); }}
+                className="card-lumi bg-white border-amber-100 text-center space-y-3 hover:bg-amber-50 transition-colors"
+              >
+                <p className="text-6xl font-black text-amber-600">{item.value}</p>
+                <p className="text-3xl leading-relaxed" aria-hidden="true">{item.objects}</p>
+                <p className="text-xl font-child font-bold text-slate-800">{item.text}</p>
+              </button>
+            ))}
+          </div>
+        )}
+
+        {numberMode === 'cuenta' && (
+          <div className="max-w-4xl mx-auto space-y-6">
+            <div className="card-lumi text-center bg-amber-50 border-amber-100 space-y-3">
+              <p className="text-5xl leading-relaxed" aria-hidden="true">{countChallenge.objects}</p>
+              <p className="text-3xl font-child font-bold text-amber-800">¿Cuántos hay?</p>
+            </div>
+            <div className="grid grid-cols-3 gap-4">
+              {countOptions.map((option) => <button key={option} onClick={() => handleCountAnswer(option)} className="btn-child py-8 text-5xl font-black bg-white border-amber-100 text-amber-600">{option}</button>)}
+            </div>
+          </div>
+        )}
+
+        {numberMode === 'toca' && (
+          <div className="max-w-4xl mx-auto space-y-6">
+            <div className="card-lumi text-center bg-amber-50 border-amber-100">
+              <p className="text-3xl font-child font-bold text-amber-800">Toca el número {targetNumber}</p>
+            </div>
+            <div className="grid grid-cols-3 gap-4">
+              {numberOptions.map((option) => <button key={option} onClick={() => handleNumberAnswer(option)} className="btn-child py-8 text-5xl font-black bg-white border-amber-100 text-amber-600">{option}</button>)}
+            </div>
+          </div>
+        )}
+
+        {feedback && (
+          <div className="max-w-3xl mx-auto text-center bg-lumi-soft-yellow border border-amber-200 rounded-3xl px-6 py-4">
+            <p className="text-amber-800 font-bold text-2xl">{feedback}</p>
+          </div>
+        )}
       </div>
     );
   }
+
 
   if (activeSection === 'calendario') {
     const weekDays = [
