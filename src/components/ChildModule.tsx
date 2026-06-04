@@ -75,15 +75,20 @@ interface LearningProgress {
   vowelsSeen: string[];
   lettersSeen?: string[];
   syllablesSeen?: string[];
+  readingWordsSeen?: string[];
+  readingPhrasesSeen?: string[];
   attempts: number;
   alphabetAttempts?: number;
   syllableAttempts?: number;
+  readingAttempts?: number;
   correctAnswers: number;
   alphabetCorrectAnswers?: number;
   syllableCorrectAnswers?: number;
+  readingCorrectAnswers?: number;
   lastPracticeAt: string | null;
   alphabetLastPracticeAt?: string | null;
   syllableLastPracticeAt?: string | null;
+  readingLastPracticeAt?: string | null;
 }
 
 // --- Helpers ---
@@ -1352,7 +1357,7 @@ const LearningModule = () => {
     { letter: 'U', word: 'Uva', emoji: '🍇', phrase: 'U de uva.' },
   ];
   const [vowelMode, setVowelMode] = useState<'conoce' | 'toca' | 'empieza'>('conoce');
-  const [letterActivity, setLetterActivity] = useState<'vocales' | 'alfabeto' | 'silabas'>('vocales');
+  const [letterActivity, setLetterActivity] = useState<'vocales' | 'alfabeto' | 'silabas' | 'lectura'>('vocales');
   const [targetVowel, setTargetVowel] = useState('A');
   const [feedback, setFeedback] = useState<string | null>(null);
   const [startWord, setStartWord] = useState(vowels[0]);
@@ -1417,6 +1422,24 @@ const LearningModule = () => {
     { letter: 'U', word: 'Uva', emoji: '🍇' }, { letter: 'U', word: 'Uno', emoji: '1️⃣' },
     { letter: 'U', word: 'Uniforme', emoji: '👕' }, { letter: 'U', word: 'Universo', emoji: '🌌' },
   ];
+  const readingWords = [
+    { word: 'mamá', emoji: '👩' }, { word: 'papá', emoji: '👨' }, { word: 'sol', emoji: '☀️' },
+    { word: 'luna', emoji: '🌙' }, { word: 'casa', emoji: '🏠' }, { word: 'mesa', emoji: '🪑' },
+    { word: 'oso', emoji: '🐻' }, { word: 'sapo', emoji: '🐸' }, { word: 'pelota', emoji: '⚽' },
+    { word: 'agua', emoji: '💧' },
+  ];
+  const readingPhrases = [
+    { phrase: 'El sol sale.', question: '¿Qué sale?', answer: 'El sol', options: ['El sol', 'La casa', 'La luna'] },
+    { phrase: 'Mamá me ama.', question: '¿Quién me ama?', answer: 'Mamá', options: ['Mamá', 'Papá', 'El oso'] },
+    { phrase: 'La casa es roja.', question: '¿Qué es roja?', answer: 'La casa', options: ['La casa', 'La luna', 'El sapo'] },
+    { phrase: 'El oso come.', question: '¿Quién come?', answer: 'El oso', options: ['El oso', 'La mesa', 'El sol'] },
+    { phrase: 'La luna brilla.', question: '¿Qué brilla?', answer: 'La luna', options: ['La luna', 'La pelota', 'El agua'] },
+  ];
+  const [readingLevel, setReadingLevel] = useState<'palabras' | 'imagen' | 'frases'>('palabras');
+  const [readingWordIndex, setReadingWordIndex] = useState(0);
+  const [readingImageWord, setReadingImageWord] = useState(readingWords[2]);
+  const [readingWordOptions, setReadingWordOptions] = useState<string[]>(['sol', 'casa', 'luna']);
+  const [readingPhraseIndex, setReadingPhraseIndex] = useState(0);
 
   useEffect(() => {
     if (!feedback) return;
@@ -1445,15 +1468,20 @@ const LearningModule = () => {
         vowelsSeen: nextSeen,
         lettersSeen: current.lettersSeen ?? [],
         syllablesSeen: current.syllablesSeen ?? [],
+        readingWordsSeen: current.readingWordsSeen ?? [],
+        readingPhrasesSeen: current.readingPhrasesSeen ?? [],
         attempts: current.attempts + 1,
         alphabetAttempts: current.alphabetAttempts ?? 0,
         syllableAttempts: current.syllableAttempts ?? 0,
+        readingAttempts: current.readingAttempts ?? 0,
         correctAnswers: current.correctAnswers + (isCorrect ? 1 : 0),
         alphabetCorrectAnswers: current.alphabetCorrectAnswers ?? 0,
         syllableCorrectAnswers: current.syllableCorrectAnswers ?? 0,
+        readingCorrectAnswers: current.readingCorrectAnswers ?? 0,
         lastPracticeAt: new Date().toISOString(),
         alphabetLastPracticeAt: current.alphabetLastPracticeAt ?? null,
         syllableLastPracticeAt: current.syllableLastPracticeAt ?? null,
+        readingLastPracticeAt: current.readingLastPracticeAt ?? null,
       };
       setStorageItem(LUMI_STORAGE_KEYS.learningProgress, nextProgress);
     };
@@ -1525,6 +1553,56 @@ const LearningModule = () => {
         syllableAttempts: (current.syllableAttempts ?? 0) + (countAttempt ? 1 : 0),
         syllableCorrectAnswers: (current.syllableCorrectAnswers ?? 0) + (countAttempt && isCorrect ? 1 : 0),
         syllableLastPracticeAt: new Date().toISOString(),
+      });
+    };
+
+    const updateReadingProgress = (isCorrect: boolean, word?: string, phrase?: string, countAttempt = true) => {
+      const current = getStorageItem<LearningProgress>(LUMI_STORAGE_KEYS.learningProgress, {
+        vowelsSeen: [],
+        lettersSeen: [],
+        syllablesSeen: [],
+        readingWordsSeen: [],
+        readingPhrasesSeen: [],
+        attempts: 0,
+        alphabetAttempts: 0,
+        syllableAttempts: 0,
+        readingAttempts: 0,
+        correctAnswers: 0,
+        alphabetCorrectAnswers: 0,
+        syllableCorrectAnswers: 0,
+        readingCorrectAnswers: 0,
+        lastPracticeAt: null,
+        alphabetLastPracticeAt: null,
+        syllableLastPracticeAt: null,
+        readingLastPracticeAt: null,
+      }) ?? {
+        vowelsSeen: [],
+        lettersSeen: [],
+        syllablesSeen: [],
+        readingWordsSeen: [],
+        readingPhrasesSeen: [],
+        attempts: 0,
+        alphabetAttempts: 0,
+        syllableAttempts: 0,
+        readingAttempts: 0,
+        correctAnswers: 0,
+        alphabetCorrectAnswers: 0,
+        syllableCorrectAnswers: 0,
+        readingCorrectAnswers: 0,
+        lastPracticeAt: null,
+        alphabetLastPracticeAt: null,
+        syllableLastPracticeAt: null,
+        readingLastPracticeAt: null,
+      };
+      const currentWords = current.readingWordsSeen ?? [];
+      const currentPhrases = current.readingPhrasesSeen ?? [];
+      setStorageItem(LUMI_STORAGE_KEYS.learningProgress, {
+        ...current,
+        readingWordsSeen: word && !currentWords.includes(word) ? [...currentWords, word] : currentWords,
+        readingPhrasesSeen: phrase && !currentPhrases.includes(phrase) ? [...currentPhrases, phrase] : currentPhrases,
+        readingAttempts: (current.readingAttempts ?? 0) + (countAttempt ? 1 : 0),
+        readingCorrectAnswers: (current.readingCorrectAnswers ?? 0) + (countAttempt && isCorrect ? 1 : 0),
+        readingLastPracticeAt: new Date().toISOString(),
       });
     };
 
@@ -1655,13 +1733,57 @@ const LearningModule = () => {
       pickSyllableWordChallenge();
     };
 
+    const currentReadingWord = readingWords[readingWordIndex % readingWords.length];
+    const currentReadingPhrase = readingPhrases[readingPhraseIndex % readingPhrases.length];
+
+    const pickReadingWordChallenge = () => {
+      const picked = readingWords[Math.floor(Math.random() * readingWords.length)];
+      const pool = readingWords
+        .filter((item) => item.word !== picked.word)
+        .sort(() => Math.random() - 0.5)
+        .slice(0, 2)
+        .map((item) => item.word);
+      setReadingImageWord(picked);
+      setReadingWordOptions([picked.word, ...pool].sort(() => Math.random() - 0.5));
+    };
+
+    const handleReadingWordChoice = (selected: string) => {
+      if (selected === readingImageWord.word) {
+        setFeedback('Lo lograste');
+        speak(selected);
+        playFeedbackTone(true);
+        updateReadingProgress(true, selected);
+      } else {
+        setFeedback('Buen intento, leamos otra vez');
+        speak(selected);
+        playFeedbackTone(false);
+        updateReadingProgress(false, readingImageWord.word);
+      }
+      pickReadingWordChallenge();
+    };
+
+    const handleReadingPhraseChoice = (selected: string) => {
+      if (selected === currentReadingPhrase.answer) {
+        setFeedback('Lo lograste');
+        speak(selected);
+        playFeedbackTone(true);
+        updateReadingProgress(true, undefined, currentReadingPhrase.phrase);
+      } else {
+        setFeedback('Buen intento, leamos otra vez');
+        speak(selected);
+        playFeedbackTone(false);
+        updateReadingProgress(false, undefined, currentReadingPhrase.phrase);
+      }
+      setReadingPhraseIndex((current) => (current + 1) % readingPhrases.length);
+    };
+
     return (
       <div className="space-y-8">
         <div className="text-center">
           <h3 className="text-4xl font-child font-bold">Letras y lectura</h3>
           <p className="text-slate-500 mt-2">Aprendamos vocales, letras y sílabas paso a paso</p>
         </div>
-        <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 max-w-4xl mx-auto">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 max-w-5xl mx-auto">
           <button onClick={() => setLetterActivity('vocales')} className={cn('btn-child py-4 text-xl', letterActivity === 'vocales' ? 'bg-blue-100 border-blue-300 text-blue-700' : 'bg-white border-slate-100')}>
             Vocales
           </button>
@@ -1670,6 +1792,9 @@ const LearningModule = () => {
           </button>
           <button onClick={() => setLetterActivity('silabas')} className={cn('btn-child py-4 text-xl', letterActivity === 'silabas' ? 'bg-blue-100 border-blue-300 text-blue-700' : 'bg-white border-slate-100')}>
             Sílabas simples
+          </button>
+          <button onClick={() => setLetterActivity('lectura')} className={cn('btn-child py-4 text-xl', letterActivity === 'lectura' ? 'bg-blue-100 border-blue-300 text-blue-700' : 'bg-white border-slate-100')}>
+            Lectura inicial
           </button>
         </div>
 
@@ -1839,6 +1964,60 @@ const LearningModule = () => {
                 </div>
                 <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
                   {syllableWordOptions.map((option) => <button key={option} onClick={() => handleSyllableWordMatch(option)} className="btn-child py-8 text-4xl font-black bg-white border-indigo-100 text-indigo-600">{option}</button>)}
+                </div>
+              </div>
+            )}
+
+            {feedback && (
+              <div className="max-w-3xl mx-auto text-center bg-lumi-soft-yellow border border-amber-200 rounded-3xl px-6 py-4">
+                <p className="text-amber-800 font-bold text-2xl">{feedback}</p>
+              </div>
+            )}
+          </div>
+        )}
+        {letterActivity === 'lectura' && (
+          <div className="space-y-6">
+            <div className="text-center">
+              <h4 className="text-3xl font-child font-bold">Lectura inicial</h4>
+              <p className="text-slate-500">Leamos palabras y frases cortas con apoyo visual</p>
+            </div>
+            <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 max-w-4xl mx-auto">
+              <button onClick={() => setReadingLevel('palabras')} className={cn('btn-child py-4 text-xl', readingLevel === 'palabras' ? 'bg-indigo-100 border-indigo-300 text-indigo-700' : 'bg-white border-slate-100')}>Palabras cortas</button>
+              <button onClick={() => { setReadingLevel('imagen'); pickReadingWordChallenge(); }} className={cn('btn-child py-4 text-xl', readingLevel === 'imagen' ? 'bg-indigo-100 border-indigo-300 text-indigo-700' : 'bg-white border-slate-100')}>Imagen y palabra</button>
+              <button onClick={() => setReadingLevel('frases')} className={cn('btn-child py-4 text-xl', readingLevel === 'frases' ? 'bg-indigo-100 border-indigo-300 text-indigo-700' : 'bg-white border-slate-100')}>Frases cortas</button>
+            </div>
+
+            {readingLevel === 'palabras' && (
+              <div className="max-w-3xl mx-auto card-lumi bg-indigo-50 border-indigo-100 text-center space-y-4">
+                <p className="text-7xl" aria-hidden="true">{currentReadingWord.emoji}</p>
+                <p className="text-6xl font-black text-indigo-700">{currentReadingWord.word}</p>
+                <div className="flex flex-col sm:flex-row items-center justify-center gap-3 pt-2">
+                  <button onClick={() => speak(currentReadingWord.word)} className="bg-white text-indigo-700 px-5 py-3 rounded-2xl font-bold border border-indigo-100">Escuchar</button>
+                  <button onClick={() => { updateReadingProgress(true, currentReadingWord.word, undefined, false); setReadingWordIndex((current) => (current + 1) % readingWords.length); }} className="bg-indigo-600 text-white px-5 py-3 rounded-2xl font-bold">Siguiente palabra</button>
+                </div>
+              </div>
+            )}
+
+            {readingLevel === 'imagen' && (
+              <div className="max-w-4xl mx-auto space-y-4">
+                <div className="card-lumi text-center bg-indigo-50 border-indigo-100">
+                  <p className="text-7xl" aria-hidden="true">{readingImageWord.emoji}</p>
+                  <p className="text-slate-500 mt-2">¿Qué palabra corresponde?</p>
+                </div>
+                <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+                  {readingWordOptions.map((option) => <button key={option} onClick={() => handleReadingWordChoice(option)} className="btn-child py-8 text-3xl font-black bg-white border-indigo-100 text-indigo-600">{option}</button>)}
+                </div>
+              </div>
+            )}
+
+            {readingLevel === 'frases' && (
+              <div className="max-w-4xl mx-auto space-y-4">
+                <div className="card-lumi text-center bg-indigo-50 border-indigo-100">
+                  <p className="text-4xl font-child font-bold text-indigo-800">{currentReadingPhrase.phrase}</p>
+                  <p className="text-slate-500 mt-2">{currentReadingPhrase.question}</p>
+                </div>
+                <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+                  {currentReadingPhrase.options.map((option) => <button key={option} onClick={() => handleReadingPhraseChoice(option)} className="btn-child py-8 text-2xl font-black bg-white border-indigo-100 text-indigo-600">{option}</button>)}
                 </div>
               </div>
             )}
