@@ -1315,39 +1315,41 @@ const LearningModule = () => {
     { id: 'operaciones', title: 'Sumas y Restas', icon: 'Plus', color: 'bg-rose-100 text-rose-600', status: 'proximamente' },
   ] as const;
 
+  const vowels = [
+    { letter: 'A', word: 'Avión', emoji: '✈️', phrase: 'A de avión.' },
+    { letter: 'E', word: 'Elefante', emoji: '🐘', phrase: 'E de elefante.' },
+    { letter: 'I', word: 'Iguana', emoji: '🦎', phrase: 'I de iguana.' },
+    { letter: 'O', word: 'Oso', emoji: '🐻', phrase: 'O de oso.' },
+    { letter: 'U', word: 'Uva', emoji: '🍇', phrase: 'U de uva.' },
+  ];
+  const [vowelMode, setVowelMode] = useState<'conoce' | 'toca' | 'empieza'>('conoce');
+  const [letterActivity, setLetterActivity] = useState<'vocales' | 'alfabeto'>('vocales');
+  const [targetVowel, setTargetVowel] = useState('A');
+  const [feedback, setFeedback] = useState<string | null>(null);
+  const [startWord, setStartWord] = useState(vowels[0]);
+  const alphabetLetters = [
+    { upper: 'A', lower: 'a', word: 'avión', emoji: '✈️' }, { upper: 'B', lower: 'b', word: 'barco', emoji: '🚢' },
+    { upper: 'C', lower: 'c', word: 'casa', emoji: '🏠' }, { upper: 'D', lower: 'd', word: 'dado', emoji: '🎲' },
+    { upper: 'E', lower: 'e', word: 'elefante', emoji: '🐘' }, { upper: 'F', lower: 'f', word: 'flor', emoji: '🌸' },
+    { upper: 'G', lower: 'g', word: 'gato', emoji: '🐱' }, { upper: 'H', lower: 'h', word: 'helado', emoji: '🍦' },
+    { upper: 'I', lower: 'i', word: 'iguana', emoji: '🦎' }, { upper: 'J', lower: 'j', word: 'jugo', emoji: '🧃' },
+    { upper: 'K', lower: 'k', word: 'kiwi', emoji: '🥝' }, { upper: 'L', lower: 'l', word: 'luna', emoji: '🌙' },
+    { upper: 'M', lower: 'm', word: 'mamá', emoji: '👩' }, { upper: 'N', lower: 'n', word: 'nube', emoji: '☁️' },
+    { upper: 'Ñ', lower: 'ñ', word: 'ñu', emoji: '🦬' }, { upper: 'O', lower: 'o', word: 'oso', emoji: '🐻' },
+    { upper: 'P', lower: 'p', word: 'pelota', emoji: '⚽' }, { upper: 'Q', lower: 'q', word: 'queso', emoji: '🧀' },
+    { upper: 'R', lower: 'r', word: 'rana', emoji: '🐸' }, { upper: 'S', lower: 's', word: 'sol', emoji: '☀️' },
+    { upper: 'T', lower: 't', word: 'tren', emoji: '🚂' }, { upper: 'U', lower: 'u', word: 'uva', emoji: '🍇' },
+    { upper: 'V', lower: 'v', word: 'vaca', emoji: '🐮' }, { upper: 'W', lower: 'w', word: 'waffle', emoji: '🧇' },
+    { upper: 'X', lower: 'x', word: 'xilófono', emoji: '🎼' }, { upper: 'Y', lower: 'y', word: 'yoyo', emoji: '🪀' },
+    { upper: 'Z', lower: 'z', word: 'zorro', emoji: '🦊' },
+  ];
+  const [alphabetMode, setAlphabetMode] = useState<'explorar' | 'encuentra' | 'empieza'>('explorar');
+  const [targetLetter, setTargetLetter] = useState('M');
+  const [alphabetWord, setAlphabetWord] = useState(alphabetLetters.find((item) => item.upper === 'S') ?? alphabetLetters[0]);
+  const [alphabetOptions, setAlphabetOptions] = useState<string[]>(['S', 'M', 'P', 'L']);
+
   if (activeSection === 'letras') {
-    const vowels = [
-      { letter: 'A', word: 'Avión', emoji: '✈️', phrase: 'A de avión.' },
-      { letter: 'E', word: 'Elefante', emoji: '🐘', phrase: 'E de elefante.' },
-      { letter: 'I', word: 'Iguana', emoji: '🦎', phrase: 'I de iguana.' },
-      { letter: 'O', word: 'Oso', emoji: '🐻', phrase: 'O de oso.' },
-      { letter: 'U', word: 'Uva', emoji: '🍇', phrase: 'U de uva.' },
-    ];
-    const [vowelMode, setVowelMode] = useState<'conoce' | 'toca' | 'empieza'>('conoce');
-    const [letterActivity, setLetterActivity] = useState<'vocales' | 'alfabeto'>('vocales');
-    const [targetVowel, setTargetVowel] = useState('A');
-    const [feedback, setFeedback] = useState<string | null>(null);
-    const [startWord, setStartWord] = useState(vowels[0]);
-    const alphabetLetters = [
-      { upper: 'A', lower: 'a', word: 'avión', emoji: '✈️' }, { upper: 'B', lower: 'b', word: 'barco', emoji: '🚢' },
-      { upper: 'C', lower: 'c', word: 'casa', emoji: '🏠' }, { upper: 'D', lower: 'd', word: 'dado', emoji: '🎲' },
-      { upper: 'E', lower: 'e', word: 'elefante', emoji: '🐘' }, { upper: 'F', lower: 'f', word: 'flor', emoji: '🌸' },
-      { upper: 'G', lower: 'g', word: 'gato', emoji: '🐱' }, { upper: 'H', lower: 'h', word: 'helado', emoji: '🍦' },
-      { upper: 'I', lower: 'i', word: 'iguana', emoji: '🦎' }, { upper: 'J', lower: 'j', word: 'jugo', emoji: '🧃' },
-      { upper: 'K', lower: 'k', word: 'kiwi', emoji: '🥝' }, { upper: 'L', lower: 'l', word: 'luna', emoji: '🌙' },
-      { upper: 'M', lower: 'm', word: 'mamá', emoji: '👩' }, { upper: 'N', lower: 'n', word: 'nube', emoji: '☁️' },
-      { upper: 'Ñ', lower: 'ñ', word: 'ñu', emoji: '🦬' }, { upper: 'O', lower: 'o', word: 'oso', emoji: '🐻' },
-      { upper: 'P', lower: 'p', word: 'pelota', emoji: '⚽' }, { upper: 'Q', lower: 'q', word: 'queso', emoji: '🧀' },
-      { upper: 'R', lower: 'r', word: 'rana', emoji: '🐸' }, { upper: 'S', lower: 's', word: 'sol', emoji: '☀️' },
-      { upper: 'T', lower: 't', word: 'tren', emoji: '🚂' }, { upper: 'U', lower: 'u', word: 'uva', emoji: '🍇' },
-      { upper: 'V', lower: 'v', word: 'vaca', emoji: '🐮' }, { upper: 'W', lower: 'w', word: 'waffle', emoji: '🧇' },
-      { upper: 'X', lower: 'x', word: 'xilófono', emoji: '🎼' }, { upper: 'Y', lower: 'y', word: 'yoyo', emoji: '🪀' },
-      { upper: 'Z', lower: 'z', word: 'zorro', emoji: '🦊' },
-    ];
-    const [alphabetMode, setAlphabetMode] = useState<'explorar' | 'encuentra' | 'empieza'>('explorar');
-    const [targetLetter, setTargetLetter] = useState('M');
-    const [alphabetWord, setAlphabetWord] = useState(alphabetLetters.find((item) => item.upper === 'S') ?? alphabetLetters[0]);
-    const [alphabetOptions, setAlphabetOptions] = useState<string[]>(['S', 'M', 'P', 'L']);
+
 
     const updateLearningProgress = (isCorrect: boolean, seenVowel?: string) => {
       const current = getStorageItem<LearningProgress>(LUMI_STORAGE_KEYS.learningProgress, {
