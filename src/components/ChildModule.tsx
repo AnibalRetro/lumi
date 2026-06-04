@@ -1359,20 +1359,46 @@ const LearningModule = () => {
     { family: 'la', items: ['la', 'le', 'li', 'lo', 'lu'], example: 'luna', emoji: '🌙' },
     { family: 'ta', items: ['ta', 'te', 'ti', 'to', 'tu'], example: 'taza', emoji: '☕' },
   ];
-  const syllableWordPairs = [
-    { syllable: 'ma', word: 'mamá', emoji: '👩' },
-    { syllable: 'pa', word: 'papá', emoji: '👨' },
-    { syllable: 'sa', word: 'sapo', emoji: '🐸' },
-    { syllable: 'la', word: 'luna', emoji: '🌙' },
-    { syllable: 'ta', word: 'taza', emoji: '☕' },
-  ];
   const allSyllables = syllableFamilies.flatMap((family) => family.items);
   const [syllableMode, setSyllableMode] = useState<'ver' | 'encuentra' | 'une'>('ver');
   const [currentSyllableIndex, setCurrentSyllableIndex] = useState(0);
   const [targetSyllable, setTargetSyllable] = useState('ma');
   const [syllableOptions, setSyllableOptions] = useState<string[]>(['ma', 'me', 'mi', 'mo']);
-  const [syllableWord, setSyllableWord] = useState(syllableWordPairs[0]);
+  const [syllableWord, setSyllableWord] = useState({ syllable: 'ma', word: 'mamá', emoji: '👩' });
   const [syllableWordOptions, setSyllableWordOptions] = useState<string[]>(['ma', 'pa', 'sa', 'la']);
+  const syllableExamples = [
+    { syllable: 'ma', word: 'mamá', emoji: '👩' }, { syllable: 'me', word: 'mesa', emoji: '🪑' },
+    { syllable: 'mi', word: 'mimo', emoji: '🎭' }, { syllable: 'mo', word: 'mono', emoji: '🐵' },
+    { syllable: 'mu', word: 'muñeca', emoji: '🧸' }, { syllable: 'pa', word: 'papá', emoji: '👨' },
+    { syllable: 'pe', word: 'perro', emoji: '🐶' }, { syllable: 'pi', word: 'piña', emoji: '🍍' },
+    { syllable: 'po', word: 'pollo', emoji: '🐥' }, { syllable: 'pu', word: 'puerta', emoji: '🚪' },
+    { syllable: 'sa', word: 'sapo', emoji: '🐸' }, { syllable: 'se', word: 'semilla', emoji: '🌱' },
+    { syllable: 'si', word: 'silla', emoji: '🪑' }, { syllable: 'so', word: 'sol', emoji: '☀️' },
+    { syllable: 'su', word: 'suma', emoji: '➕' }, { syllable: 'la', word: 'luna', emoji: '🌙' },
+    { syllable: 'le', word: 'leche', emoji: '🥛' }, { syllable: 'li', word: 'limón', emoji: '🍋' },
+    { syllable: 'lo', word: 'lobo', emoji: '🐺' }, { syllable: 'lu', word: 'lupa', emoji: '🔎' },
+    { syllable: 'ta', word: 'taza', emoji: '☕' }, { syllable: 'te', word: 'teléfono', emoji: '☎️' },
+    { syllable: 'ti', word: 'tigre', emoji: '🐯' }, { syllable: 'to', word: 'tomate', emoji: '🍅' },
+    { syllable: 'tu', word: 'tortuga', emoji: '🐢' },
+  ];
+  const vowelWordExamples = [
+    { letter: 'A', word: 'Avión', emoji: '✈️' }, { letter: 'A', word: 'Árbol', emoji: '🌳' },
+    { letter: 'A', word: 'Araña', emoji: '🕷️' }, { letter: 'A', word: 'Abeja', emoji: '🐝' },
+    { letter: 'E', word: 'Elefante', emoji: '🐘' }, { letter: 'E', word: 'Estrella', emoji: '⭐' },
+    { letter: 'E', word: 'Escuela', emoji: '🏫' }, { letter: 'E', word: 'Erizo', emoji: '🦔' },
+    { letter: 'I', word: 'Iguana', emoji: '🦎' }, { letter: 'I', word: 'Isla', emoji: '🏝️' },
+    { letter: 'I', word: 'Imán', emoji: '🧲' }, { letter: 'I', word: 'Iglú', emoji: '❄️' },
+    { letter: 'O', word: 'Oso', emoji: '🐻' }, { letter: 'O', word: 'Olla', emoji: '🍲' },
+    { letter: 'O', word: 'Oveja', emoji: '🐑' }, { letter: 'O', word: 'Ojo', emoji: '👁️' },
+    { letter: 'U', word: 'Uva', emoji: '🍇' }, { letter: 'U', word: 'Uno', emoji: '1️⃣' },
+    { letter: 'U', word: 'Uniforme', emoji: '👕' }, { letter: 'U', word: 'Universo', emoji: '🌌' },
+  ];
+
+  useEffect(() => {
+    if (!feedback) return;
+    const timeoutId = window.setTimeout(() => setFeedback(null), 2200);
+    return () => window.clearTimeout(timeoutId);
+  }, [feedback]);
 
   if (activeSection === 'letras') {
 
@@ -1481,9 +1507,11 @@ const LearningModule = () => {
     const handleTouchMode = (selected: string) => {
       if (selected === targetVowel) {
         setFeedback('Lo lograste');
+        speak(`${selected}. Lo lograste`);
         updateLearningProgress(true, selected);
       } else {
         setFeedback('Buen intento, probemos otra vez');
+        speak(`${selected}. Buen intento, probemos otra vez`);
         updateLearningProgress(false);
       }
       const next = vowels[Math.floor(Math.random() * vowels.length)];
@@ -1493,12 +1521,14 @@ const LearningModule = () => {
     const handleStartsWith = (selected: string) => {
       if (selected === startWord.letter) {
         setFeedback('Lo lograste');
+        speak(`${selected}. Lo lograste`);
         updateLearningProgress(true, selected);
       } else {
         setFeedback('Buen intento, probemos otra vez');
+        speak(`${selected}. Buen intento, probemos otra vez`);
         updateLearningProgress(false);
       }
-      setStartWord(vowels[Math.floor(Math.random() * vowels.length)]);
+      setStartWord(vowelWordExamples[Math.floor(Math.random() * vowelWordExamples.length)]);
     };
 
     const pickAlphabetChallenge = () => {
@@ -1511,9 +1541,11 @@ const LearningModule = () => {
     const handleFindLetter = (selected: string) => {
       if (selected === targetLetter) {
         setFeedback('Lo lograste');
+        speak(`${selected}. Lo lograste`);
         updateAlphabetProgress(true, selected);
       } else {
         setFeedback('Buen intento, probemos otra vez');
+        speak(`${selected}. Buen intento, probemos otra vez`);
         updateAlphabetProgress(false);
       }
       pickAlphabetChallenge();
@@ -1529,38 +1561,47 @@ const LearningModule = () => {
     const handleAlphabetStartsWith = (selected: string) => {
       if (selected === alphabetWord.upper) {
         setFeedback('Lo lograste');
+        speak(`${selected}. Lo lograste`);
         updateAlphabetProgress(true, selected);
       } else {
         setFeedback('Buen intento, probemos otra vez');
+        speak(`${selected}. Buen intento, probemos otra vez`);
         updateAlphabetProgress(false);
       }
       pickStartWordChallenge();
     };
 
     const currentSyllable = allSyllables[currentSyllableIndex % allSyllables.length];
-    const currentSyllableFamily = syllableFamilies.find((family) => family.items.includes(currentSyllable)) ?? syllableFamilies[0];
+    const currentSyllableExample = syllableExamples.find((item) => item.syllable === currentSyllable) ?? syllableExamples[0];
 
     const pickSyllableChallenge = () => {
       const pickedFamily = syllableFamilies[Math.floor(Math.random() * syllableFamilies.length)];
       const picked = pickedFamily.items[Math.floor(Math.random() * pickedFamily.items.length)];
+      const pool = pickedFamily.items.filter((item) => item !== picked).sort(() => Math.random() - 0.5).slice(0, 3);
       setTargetSyllable(picked);
-      setSyllableOptions(pickedFamily.items.slice(0, 4));
+      setSyllableOptions([picked, ...pool].sort(() => Math.random() - 0.5));
     };
 
     const handleFindSyllable = (selected: string) => {
       if (selected === targetSyllable) {
         setFeedback('Lo lograste');
+        speak(`${selected}. Lo lograste`);
         updateSyllableProgress(true, selected);
       } else {
         setFeedback('Buen intento, probemos otra vez');
+        speak(`${selected}. Buen intento, probemos otra vez`);
         updateSyllableProgress(false);
       }
       pickSyllableChallenge();
     };
 
     const pickSyllableWordChallenge = () => {
-      const picked = syllableWordPairs[Math.floor(Math.random() * syllableWordPairs.length)];
-      const pool = syllableWordPairs.filter((item) => item.syllable !== picked.syllable).slice(0, 3).map((item) => item.syllable);
+      const picked = syllableExamples[Math.floor(Math.random() * syllableExamples.length)];
+      const pool = syllableExamples
+        .filter((item) => item.syllable !== picked.syllable)
+        .sort(() => Math.random() - 0.5)
+        .slice(0, 3)
+        .map((item) => item.syllable);
       setSyllableWord(picked);
       setSyllableWordOptions([picked.syllable, ...pool].sort(() => Math.random() - 0.5));
     };
@@ -1568,9 +1609,11 @@ const LearningModule = () => {
     const handleSyllableWordMatch = (selected: string) => {
       if (selected === syllableWord.syllable) {
         setFeedback('Lo lograste');
+        speak(`${selected}. Lo lograste`);
         updateSyllableProgress(true, selected);
       } else {
         setFeedback('Buen intento, probemos otra vez');
+        speak(`${selected}. Buen intento, probemos otra vez`);
         updateSyllableProgress(false);
       }
       pickSyllableWordChallenge();
@@ -1708,6 +1751,12 @@ const LearningModule = () => {
                 </div>
               </div>
             )}
+
+            {feedback && (
+              <div className="max-w-3xl mx-auto text-center bg-lumi-soft-yellow border border-amber-200 rounded-3xl px-6 py-4">
+                <p className="text-amber-800 font-bold text-2xl">{feedback}</p>
+              </div>
+            )}
           </div>
         )}
         {letterActivity === 'silabas' && (
@@ -1725,9 +1774,9 @@ const LearningModule = () => {
             {syllableMode === 'ver' && (
               <div className="max-w-3xl mx-auto card-lumi bg-indigo-50 border-indigo-100 text-center space-y-4">
                 <p className="text-7xl font-black text-indigo-700">{currentSyllable}</p>
-                <p className="text-3xl font-child font-bold text-slate-800">{currentSyllable} como {currentSyllableFamily.example} {currentSyllableFamily.emoji}</p>
+                <p className="text-3xl font-child font-bold text-slate-800">{currentSyllable} como {currentSyllableExample.word} {currentSyllableExample.emoji}</p>
                 <div className="flex flex-col sm:flex-row items-center justify-center gap-3 pt-2">
-                  <button onClick={() => speak(`${currentSyllable}. ${currentSyllable} como ${currentSyllableFamily.example}`)} className="bg-white text-indigo-700 px-5 py-3 rounded-2xl font-bold border border-indigo-100">
+                  <button onClick={() => speak(`${currentSyllable}. ${currentSyllable} como ${currentSyllableExample.word}`)} className="bg-white text-indigo-700 px-5 py-3 rounded-2xl font-bold border border-indigo-100">
                     Escuchar
                   </button>
                   <button onClick={() => { updateSyllableProgress(true, currentSyllable, false); setCurrentSyllableIndex((current) => (current + 1) % allSyllables.length); }} className="bg-indigo-600 text-white px-5 py-3 rounded-2xl font-bold">
