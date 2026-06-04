@@ -74,12 +74,16 @@ interface LearningSettings {
 interface LearningProgress {
   vowelsSeen: string[];
   lettersSeen?: string[];
+  syllablesSeen?: string[];
   attempts: number;
   alphabetAttempts?: number;
+  syllableAttempts?: number;
   correctAnswers: number;
   alphabetCorrectAnswers?: number;
+  syllableCorrectAnswers?: number;
   lastPracticeAt: string | null;
   alphabetLastPracticeAt?: string | null;
+  syllableLastPracticeAt?: string | null;
 }
 
 // --- Helpers ---
@@ -1310,7 +1314,7 @@ const LearningModule = () => {
       : null;
   
   const sections = [
-    { id: 'letras', title: 'Letras y Vocales', icon: 'SquareDashed', color: 'bg-indigo-100 text-indigo-600', status: 'disponible' },
+    { id: 'letras', title: 'Letras y lectura', icon: 'SquareDashed', color: 'bg-indigo-100 text-indigo-600', status: 'disponible' },
     { id: 'numeros', title: 'Números y conteo', icon: 'Hash', color: 'bg-amber-100 text-amber-600', status: 'disponible' },
     { id: 'calendario', title: 'Días y meses', icon: 'Calendar', color: 'bg-sky-100 text-sky-600', status: 'disponible' },
     { id: 'operaciones', title: 'Sumas y Restas', icon: 'Plus', color: 'bg-rose-100 text-rose-600', status: 'proximamente' },
@@ -1324,7 +1328,7 @@ const LearningModule = () => {
     { letter: 'U', word: 'Uva', emoji: '🍇', phrase: 'U de uva.' },
   ];
   const [vowelMode, setVowelMode] = useState<'conoce' | 'toca' | 'empieza'>('conoce');
-  const [letterActivity, setLetterActivity] = useState<'vocales' | 'alfabeto'>('vocales');
+  const [letterActivity, setLetterActivity] = useState<'vocales' | 'alfabeto' | 'silabas'>('vocales');
   const [targetVowel, setTargetVowel] = useState('A');
   const [feedback, setFeedback] = useState<string | null>(null);
   const [startWord, setStartWord] = useState(vowels[0]);
@@ -1348,6 +1352,27 @@ const LearningModule = () => {
   const [targetLetter, setTargetLetter] = useState('M');
   const [alphabetWord, setAlphabetWord] = useState(alphabetLetters.find((item) => item.upper === 'S') ?? alphabetLetters[0]);
   const [alphabetOptions, setAlphabetOptions] = useState<string[]>(['S', 'M', 'P', 'L']);
+  const syllableFamilies = [
+    { family: 'ma', items: ['ma', 'me', 'mi', 'mo', 'mu'], example: 'mamá', emoji: '👩' },
+    { family: 'pa', items: ['pa', 'pe', 'pi', 'po', 'pu'], example: 'papá', emoji: '👨' },
+    { family: 'sa', items: ['sa', 'se', 'si', 'so', 'su'], example: 'sapo', emoji: '🐸' },
+    { family: 'la', items: ['la', 'le', 'li', 'lo', 'lu'], example: 'luna', emoji: '🌙' },
+    { family: 'ta', items: ['ta', 'te', 'ti', 'to', 'tu'], example: 'taza', emoji: '☕' },
+  ];
+  const syllableWordPairs = [
+    { syllable: 'ma', word: 'mamá', emoji: '👩' },
+    { syllable: 'pa', word: 'papá', emoji: '👨' },
+    { syllable: 'sa', word: 'sapo', emoji: '🐸' },
+    { syllable: 'la', word: 'luna', emoji: '🌙' },
+    { syllable: 'ta', word: 'taza', emoji: '☕' },
+  ];
+  const allSyllables = syllableFamilies.flatMap((family) => family.items);
+  const [syllableMode, setSyllableMode] = useState<'ver' | 'encuentra' | 'une'>('ver');
+  const [currentSyllableIndex, setCurrentSyllableIndex] = useState(0);
+  const [targetSyllable, setTargetSyllable] = useState('ma');
+  const [syllableOptions, setSyllableOptions] = useState<string[]>(['ma', 'me', 'mi', 'mo']);
+  const [syllableWord, setSyllableWord] = useState(syllableWordPairs[0]);
+  const [syllableWordOptions, setSyllableWordOptions] = useState<string[]>(['ma', 'pa', 'sa', 'la']);
 
   if (activeSection === 'letras') {
 
@@ -1369,12 +1394,16 @@ const LearningModule = () => {
       const nextProgress: LearningProgress = {
         vowelsSeen: nextSeen,
         lettersSeen: current.lettersSeen ?? [],
+        syllablesSeen: current.syllablesSeen ?? [],
         attempts: current.attempts + 1,
         alphabetAttempts: current.alphabetAttempts ?? 0,
+        syllableAttempts: current.syllableAttempts ?? 0,
         correctAnswers: current.correctAnswers + (isCorrect ? 1 : 0),
         alphabetCorrectAnswers: current.alphabetCorrectAnswers ?? 0,
+        syllableCorrectAnswers: current.syllableCorrectAnswers ?? 0,
         lastPracticeAt: new Date().toISOString(),
         alphabetLastPracticeAt: current.alphabetLastPracticeAt ?? null,
+        syllableLastPracticeAt: current.syllableLastPracticeAt ?? null,
       };
       setStorageItem(LUMI_STORAGE_KEYS.learningProgress, nextProgress);
     };
@@ -1407,6 +1436,45 @@ const LearningModule = () => {
         alphabetAttempts: (current.alphabetAttempts ?? 0) + 1,
         alphabetCorrectAnswers: (current.alphabetCorrectAnswers ?? 0) + (isCorrect ? 1 : 0),
         alphabetLastPracticeAt: new Date().toISOString(),
+      });
+    };
+
+    const updateSyllableProgress = (isCorrect: boolean, seenSyllable?: string, countAttempt = true) => {
+      const current = getStorageItem<LearningProgress>(LUMI_STORAGE_KEYS.learningProgress, {
+        vowelsSeen: [],
+        lettersSeen: [],
+        syllablesSeen: [],
+        attempts: 0,
+        alphabetAttempts: 0,
+        syllableAttempts: 0,
+        correctAnswers: 0,
+        alphabetCorrectAnswers: 0,
+        syllableCorrectAnswers: 0,
+        lastPracticeAt: null,
+        alphabetLastPracticeAt: null,
+        syllableLastPracticeAt: null,
+      }) ?? {
+        vowelsSeen: [],
+        lettersSeen: [],
+        syllablesSeen: [],
+        attempts: 0,
+        alphabetAttempts: 0,
+        syllableAttempts: 0,
+        correctAnswers: 0,
+        alphabetCorrectAnswers: 0,
+        syllableCorrectAnswers: 0,
+        lastPracticeAt: null,
+        alphabetLastPracticeAt: null,
+        syllableLastPracticeAt: null,
+      };
+      const currentSyllables = current.syllablesSeen ?? [];
+      const nextSyllables = seenSyllable && !currentSyllables.includes(seenSyllable) ? [...currentSyllables, seenSyllable] : currentSyllables;
+      setStorageItem(LUMI_STORAGE_KEYS.learningProgress, {
+        ...current,
+        syllablesSeen: nextSyllables,
+        syllableAttempts: (current.syllableAttempts ?? 0) + (countAttempt ? 1 : 0),
+        syllableCorrectAnswers: (current.syllableCorrectAnswers ?? 0) + (countAttempt && isCorrect ? 1 : 0),
+        syllableLastPracticeAt: new Date().toISOString(),
       });
     };
 
@@ -1469,18 +1537,60 @@ const LearningModule = () => {
       pickStartWordChallenge();
     };
 
+    const currentSyllable = allSyllables[currentSyllableIndex % allSyllables.length];
+    const currentSyllableFamily = syllableFamilies.find((family) => family.items.includes(currentSyllable)) ?? syllableFamilies[0];
+
+    const pickSyllableChallenge = () => {
+      const pickedFamily = syllableFamilies[Math.floor(Math.random() * syllableFamilies.length)];
+      const picked = pickedFamily.items[Math.floor(Math.random() * pickedFamily.items.length)];
+      setTargetSyllable(picked);
+      setSyllableOptions(pickedFamily.items.slice(0, 4));
+    };
+
+    const handleFindSyllable = (selected: string) => {
+      if (selected === targetSyllable) {
+        setFeedback('Lo lograste');
+        updateSyllableProgress(true, selected);
+      } else {
+        setFeedback('Buen intento, probemos otra vez');
+        updateSyllableProgress(false);
+      }
+      pickSyllableChallenge();
+    };
+
+    const pickSyllableWordChallenge = () => {
+      const picked = syllableWordPairs[Math.floor(Math.random() * syllableWordPairs.length)];
+      const pool = syllableWordPairs.filter((item) => item.syllable !== picked.syllable).slice(0, 3).map((item) => item.syllable);
+      setSyllableWord(picked);
+      setSyllableWordOptions([picked.syllable, ...pool].sort(() => Math.random() - 0.5));
+    };
+
+    const handleSyllableWordMatch = (selected: string) => {
+      if (selected === syllableWord.syllable) {
+        setFeedback('Lo lograste');
+        updateSyllableProgress(true, selected);
+      } else {
+        setFeedback('Buen intento, probemos otra vez');
+        updateSyllableProgress(false);
+      }
+      pickSyllableWordChallenge();
+    };
+
     return (
       <div className="space-y-8">
         <div className="text-center">
-          <h3 className="text-4xl font-child font-bold">Vocales</h3>
-          <p className="text-slate-500 mt-2">Aprendamos vocales con actividades simples</p>
+          <h3 className="text-4xl font-child font-bold">Letras y lectura</h3>
+          <p className="text-slate-500 mt-2">Aprendamos vocales, letras y sílabas paso a paso</p>
         </div>
-        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 max-w-3xl mx-auto">
+        <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 max-w-4xl mx-auto">
           <button onClick={() => setLetterActivity('vocales')} className={cn('btn-child py-4 text-xl', letterActivity === 'vocales' ? 'bg-blue-100 border-blue-300 text-blue-700' : 'bg-white border-slate-100')}>
             Vocales
           </button>
           <button onClick={() => setLetterActivity('alfabeto')} className={cn('btn-child py-4 text-xl', letterActivity === 'alfabeto' ? 'bg-blue-100 border-blue-300 text-blue-700' : 'bg-white border-slate-100')}>
             Alfabeto
+          </button>
+          <button onClick={() => setLetterActivity('silabas')} className={cn('btn-child py-4 text-xl', letterActivity === 'silabas' ? 'bg-blue-100 border-blue-300 text-blue-700' : 'bg-white border-slate-100')}>
+            Sílabas simples
           </button>
         </div>
 
@@ -1596,6 +1706,61 @@ const LearningModule = () => {
                 <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
                   {alphabetOptions.map((opt) => <button key={opt} onClick={() => handleAlphabetStartsWith(opt)} className="btn-child py-8 text-4xl font-black bg-white border-indigo-100 text-indigo-600">{opt}</button>)}
                 </div>
+              </div>
+            )}
+          </div>
+        )}
+        {letterActivity === 'silabas' && (
+          <div className="space-y-6">
+            <div className="text-center">
+              <h4 className="text-3xl font-child font-bold">Sílabas simples</h4>
+              <p className="text-slate-500">Unimos sonidos cortos para empezar a leer</p>
+            </div>
+            <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 max-w-4xl mx-auto">
+              <button onClick={() => setSyllableMode('ver')} className={cn('btn-child py-4 text-xl', syllableMode === 'ver' ? 'bg-indigo-100 border-indigo-300 text-indigo-700' : 'bg-white border-slate-100')}>Ver y repetir</button>
+              <button onClick={() => { setSyllableMode('encuentra'); pickSyllableChallenge(); }} className={cn('btn-child py-4 text-xl', syllableMode === 'encuentra' ? 'bg-indigo-100 border-indigo-300 text-indigo-700' : 'bg-white border-slate-100')}>Encuentra la sílaba</button>
+              <button onClick={() => { setSyllableMode('une'); pickSyllableWordChallenge(); }} className={cn('btn-child py-4 text-xl', syllableMode === 'une' ? 'bg-indigo-100 border-indigo-300 text-indigo-700' : 'bg-white border-slate-100')}>Une con palabra</button>
+            </div>
+
+            {syllableMode === 'ver' && (
+              <div className="max-w-3xl mx-auto card-lumi bg-indigo-50 border-indigo-100 text-center space-y-4">
+                <p className="text-7xl font-black text-indigo-700">{currentSyllable}</p>
+                <p className="text-3xl font-child font-bold text-slate-800">{currentSyllable} como {currentSyllableFamily.example} {currentSyllableFamily.emoji}</p>
+                <div className="flex flex-col sm:flex-row items-center justify-center gap-3 pt-2">
+                  <button onClick={() => speak(`${currentSyllable}. ${currentSyllable} como ${currentSyllableFamily.example}`)} className="bg-white text-indigo-700 px-5 py-3 rounded-2xl font-bold border border-indigo-100">
+                    Escuchar
+                  </button>
+                  <button onClick={() => { updateSyllableProgress(true, currentSyllable, false); setCurrentSyllableIndex((current) => (current + 1) % allSyllables.length); }} className="bg-indigo-600 text-white px-5 py-3 rounded-2xl font-bold">
+                    Siguiente sílaba
+                  </button>
+                </div>
+              </div>
+            )}
+
+            {syllableMode === 'encuentra' && (
+              <div className="max-w-4xl mx-auto space-y-4">
+                <div className="card-lumi text-center bg-indigo-50 border-indigo-100"><p className="text-3xl font-child font-bold text-indigo-800">Toca {targetSyllable}</p></div>
+                <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
+                  {syllableOptions.map((option) => <button key={option} onClick={() => handleFindSyllable(option)} className="btn-child py-8 text-4xl font-black bg-white border-indigo-100 text-indigo-600">{option}</button>)}
+                </div>
+              </div>
+            )}
+
+            {syllableMode === 'une' && (
+              <div className="max-w-4xl mx-auto space-y-4">
+                <div className="card-lumi text-center bg-indigo-50 border-indigo-100">
+                  <p className="text-4xl font-child font-bold text-indigo-800">{syllableWord.word} {syllableWord.emoji}</p>
+                  <p className="text-slate-500 mt-2">¿Con qué sílaba empieza?</p>
+                </div>
+                <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
+                  {syllableWordOptions.map((option) => <button key={option} onClick={() => handleSyllableWordMatch(option)} className="btn-child py-8 text-4xl font-black bg-white border-indigo-100 text-indigo-600">{option}</button>)}
+                </div>
+              </div>
+            )}
+
+            {feedback && (
+              <div className="max-w-3xl mx-auto text-center bg-lumi-soft-yellow border border-amber-200 rounded-3xl px-6 py-4">
+                <p className="text-amber-800 font-bold text-2xl">{feedback}</p>
               </div>
             )}
           </div>
@@ -1787,7 +1952,7 @@ const LearningModule = () => {
         </div>
 
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-8 max-w-6xl mx-auto">
-          {sections.map(s => (
+          {sections.filter((s) => s.id !== 'letras').map(s => (
             <button
               key={s.id}
               onClick={() => {
