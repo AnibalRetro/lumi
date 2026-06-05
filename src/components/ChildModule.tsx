@@ -1,7 +1,6 @@
-/**
- * @license
- * SPDX-License-Identifier: Apache-2.0
- */
+import { useContext, useState } from 'react';
+import { Link, Route, Routes } from 'react-router-dom';
+import { AppDataContext } from '../App';
 
 import { useState, useContext, useEffect, useCallback } from 'react';
 import { Routes, Route, Link, useNavigate } from 'react-router-dom';
@@ -117,7 +116,13 @@ interface LearningProgress {
   memoryLastPracticeAt?: string | null;
 }
 
-// --- Helpers ---
+function Home(){return <div className='grid md:grid-cols-3 gap-4'>{nav.map(([p,l])=><Link key={p} to={p} className='btn-child bg-white border-slate-200'>{l}</Link>)}</div>}
+function Routine(){const {data,setData}=useContext(AppDataContext); const r=data.routines[0]; const done=r.activities.filter(a=>a.status==='hecho').length; const mark=(id:string)=>setData(d=>({...d,routines:d.routines.map((rr,i)=>i?rr:{...rr,activities:rr.activities.map(a=>a.id===id?{...a,status:a.status==='hecho'?'pendiente':'hecho'}:a)}),progress:{...d.progress,routinesCompleted:d.progress.routinesCompleted+1}})); return <div><h2>{r.name}</h2><p>Llevas {done} de {r.activities.length} actividades</p>{r.activities.map(a=><button key={a.id} onClick={()=>mark(a.id)} className='block w-full p-3 my-2 rounded-xl border'>{a.name} - {a.status}</button>)}</div>}
+function Emotions(){const {data,setData}=useContext(AppDataContext); const [e,setE]=useState(''); const [i,setI]=useState(''); const em=data.emotions.find(x=>x.id===e); return <div>{!e && data.emotions.map(x=><button key={x.id} onClick={()=>setE(x.id)} className='m-1 p-3 border rounded-xl'>{x.name}</button>)}{e&&!i&&['poquito','medio','mucho'].map(x=><button key={x} onClick={()=>setI(x)} className='m-1 p-3 border rounded-xl'>{x}</button>)}{em&&i&&<div><p>Estoy {em.name.toLowerCase()} {i} y necesito...</p>{em.strategies.map(s=><button key={s} onClick={()=>setData(d=>({...d,progress:{...d.progress,emotionsLogged:d.progress.emotionsLogged+1}}))} className='m-1 p-3 border rounded-xl'>{s}</button>)}</div>}</div>}
+function Needs(){const {data,setData}=useContext(AppDataContext); const [phrase,setPhrase]=useState(''); return <div><h2>Qué necesito</h2>{phrase&&<p className='text-3xl'>{phrase}</p>}{data.needs.filter(n=>n.active).map(n=><button key={n.id} onClick={()=>{setPhrase(n.phrase);setData(d=>({...d,progress:{...d.progress,needsUsed:d.progress.needsUsed+1}}));}} className='m-1 p-3 border rounded-xl'>{n.name}</button>)}</div>}
+function Pain(){const {data,setData}=useContext(AppDataContext); const [area,setArea]=useState(''); const [intensity,setIntensity]=useState(''); const add=(action:string)=>setData(d=>({...d,painLogs:[{id:Date.now().toString(),date:new Date().toISOString(),area,intensity:intensity as any,action},...d.painLogs],progress:{...d.progress,painReports:d.progress.painReports+1}})); return <div><h2>¿Dónde te duele?</h2>{!area&&data.painAreas.map(a=><button key={a.id} onClick={()=>setArea(a.name)} className='m-1 p-2 border rounded'>{a.name}</button>)}{area&&!intensity&&['poquito','medio','mucho'].map(x=><button key={x} onClick={()=>setIntensity(x)} className='m-1 p-2 border rounded'>{x}</button>)}{area&&intensity&&<div><p>Me duele {area.toLowerCase()} {intensity}.</p>{['Pedir ayuda','Avisar a mamá/papá','Descansar','Tomar agua','Ir a un lugar tranquilo'].map(a=><button key={a} onClick={()=>add(a)} className='m-1 p-2 border rounded'>{a}</button>)}</div>}</div>}
+function Change(){const {data,setData}=useContext(AppDataContext); const active=data.changePlans.find(c=>c.active)||data.changePlans[0]; return <div><h2>Hoy algo cambió</h2><p>Antes: {active.before}</p><p>Ahora: {active.now}</p><p>Sigue igual: {active.same}</p><p>Puedes: {active.canDo}</p>{['Estoy triste','Estoy enojado','Necesito ayuda','Quiero respirar','Quiero descansar'].map(x=><button key={x} onClick={()=>setData(d=>({...d,progress:{...d.progress,planChangesViewed:d.progress.planChangesViewed+1}}))} className='m-1 p-2 border rounded'>{x}</button>)}</div>}
+function Ach(){const {data}=useContext(AppDataContext); return <div><h2>Mis logros</h2><ul><li>Completé una rutina</li><li>Pedí ayuda</li><li>Dije cómo me siento</li></ul><p>Lo lograste. Gracias por intentarlo.</p><pre>{JSON.stringify(data.progress,null,2)}</pre></div>}
 
 const useSpeech = () => {
   const { settings } = useContext(SettingsContext);

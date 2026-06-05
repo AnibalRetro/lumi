@@ -1,24 +1,4 @@
-/**
- * @license
- * SPDX-License-Identifier: Apache-2.0
- */
-
-import React, { useState, createContext, useContext, useEffect } from 'react';
-import { BrowserRouter as Router, Routes, Route, Link, useLocation } from 'react-router-dom';
-import { motion, AnimatePresence } from 'motion/react';
-import { 
-  Heart, 
-  Baby, 
-  Users, 
-  Info, 
-  Volume2, 
-  VolumeX, 
-  Eye, 
-  EyeOff,
-  Home as HomeIcon,
-  ChevronLeft,
-  Settings
-} from 'lucide-react';
+import { BrowserRouter as Router, Routes, Route, Link } from 'react-router-dom';
 import ChildModule from './components/ChildModule';
 import ParentModule from './components/ParentModule';
 import { cn } from './lib/utils';
@@ -286,6 +266,6 @@ function AboutPage() {
           <p className="text-slate-600">Buscamos centralizar recursos y directorios para que las familias encuentren el apoyo que necesitan.</p>
         </div>
       </div>
-    </div>
-  );
+    </Router>
+  </AppDataContext.Provider>
 }
