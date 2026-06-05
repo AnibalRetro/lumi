@@ -1324,6 +1324,44 @@ const GamesModule = () => {
 
 // --- Learning Module ---
 
+const calendarDayNames = ['Lunes', 'Martes', 'Miércoles', 'Jueves', 'Viernes', 'Sábado', 'Domingo'];
+const calendarMonthOptions = [
+  { name: 'Enero', emoji: '❄️', phrase: 'Enero empieza el año.', maxDays: 31 },
+  { name: 'Febrero', emoji: '💛', phrase: 'Febrero es el segundo mes.', maxDays: 28 },
+  { name: 'Marzo', emoji: '🌷', phrase: 'Marzo trae cambios de estación.', maxDays: 31 },
+  { name: 'Abril', emoji: '🌧️', phrase: 'Abril es el cuarto mes.', maxDays: 30 },
+  { name: 'Mayo', emoji: '🌸', phrase: 'Mayo llega con flores.', maxDays: 31 },
+  { name: 'Junio', emoji: '🌤️', phrase: 'Junio está a la mitad del año.', maxDays: 30 },
+  { name: 'Julio', emoji: '🏖️', phrase: 'Julio es el séptimo mes.', maxDays: 31 },
+  { name: 'Agosto', emoji: '🌻', phrase: 'Agosto sigue en verano.', maxDays: 31 },
+  { name: 'Septiembre', emoji: '🍂', phrase: 'Septiembre inicia una nueva parte del año.', maxDays: 30 },
+  { name: 'Octubre', emoji: '🎃', phrase: 'Octubre es el décimo mes.', maxDays: 31 },
+  { name: 'Noviembre', emoji: '🕯️', phrase: 'Noviembre está cerca del final del año.', maxDays: 30 },
+  { name: 'Diciembre', emoji: '🎁', phrase: 'Diciembre cierra el año.', maxDays: 31 },
+];
+const calendarNumberWords = [
+  '', 'uno', 'dos', 'tres', 'cuatro', 'cinco', 'seis', 'siete', 'ocho', 'nueve', 'diez',
+  'once', 'doce', 'trece', 'catorce', 'quince', 'dieciséis', 'diecisiete', 'dieciocho', 'diecinueve', 'veinte',
+  'veintiuno', 'veintidós', 'veintitrés', 'veinticuatro', 'veinticinco', 'veintiséis', 'veintisiete', 'veintiocho',
+  'veintinueve', 'treinta', 'treinta y uno',
+];
+const mexicoHolidayNotes = [
+  { month: 'Septiembre', day: 16, emoji: '🇲🇽', title: 'Día de la Independencia', note: 'En México se recuerda el inicio de la Independencia con colores, música y reuniones familiares.' },
+  { month: 'Octubre', day: 31, emoji: '🎃', title: 'Halloween', note: 'Algunas familias en México usan disfraces y calabazas; puede ser una fecha para jugar con calma.' },
+  { month: 'Noviembre', day: 2, emoji: '💀', title: 'Día de Muertos', note: 'Muchas familias ponen ofrendas con flores, fotos y comida para recordar con cariño.' },
+  { month: 'Diciembre', day: 25, emoji: '🎄', title: 'Navidad', note: 'Navidad suele ser un día de convivencia familiar, luces y momentos tranquilos juntos.' },
+];
+const multiplicationVisualItems = [
+  { emoji: '🍎', label: 'manzanas' },
+  { emoji: '🐶', label: 'perritos' },
+  { emoji: '🐝', label: 'abejas' },
+  { emoji: '🚗', label: 'carros' },
+  { emoji: '🍕', label: 'pizzas' },
+  { emoji: '⭐', label: 'estrellas' },
+  { emoji: '⚽', label: 'pelotas' },
+  { emoji: '🧸', label: 'ositos' },
+];
+
 const LearningModule = () => {
   const [activeSection, setActiveSection] = useState<string | null>(null);
   const { speak } = useSpeech();
@@ -1478,10 +1516,24 @@ const LearningModule = () => {
   const [subtractionChallenge, setSubtractionChallenge] = useState({ total: 3, takeAway: 1 });
   const [subtractionOptions, setSubtractionOptions] = useState<number[]>([1, 2, 3]);
   const [subtractionEquation, setSubtractionEquation] = useState<string | null>(null);
-  const [multiplicationMode, setMultiplicationMode] = useState<'grupos' | 'cuenta' | 'tabla'>('grupos');
-  const [multiplicationChallenge, setMultiplicationChallenge] = useState({ groups: 3, perGroup: 2 });
+  const [multiplicationMode, setMultiplicationMode] = useState<'grupos' | 'cuenta' | 'tabla' | 'escribe'>('grupos');
+  const [multiplicationChallenge, setMultiplicationChallenge] = useState({ groups: 3, perGroup: 2, emoji: '🍎', label: 'manzanas' });
   const [multiplicationOptions, setMultiplicationOptions] = useState<number[]>([5, 6, 7]);
   const [multiplicationTable, setMultiplicationTable] = useState(2);
+  const [multiplicationTypedAnswer, setMultiplicationTypedAnswer] = useState('');
+  const [selectedCalendarWeekDay, setSelectedCalendarWeekDay] = useState('Miércoles');
+  const [selectedCalendarDay, setSelectedCalendarDay] = useState(4);
+  const [selectedCalendarMonth, setSelectedCalendarMonth] = useState('Junio');
+  const [selectedCalendarYear, setSelectedCalendarYear] = useState(2024);
+
+  const selectedCalendarMonthData = calendarMonthOptions.find((month) => month.name === selectedCalendarMonth) ?? calendarMonthOptions[0];
+  const calendarMaxDay = selectedCalendarMonthData.maxDays;
+  const selectedHolidayNote = mexicoHolidayNotes.find((holiday) => holiday.month === selectedCalendarMonth && holiday.day === selectedCalendarDay);
+  const selectedCalendarPhrase = `${selectedCalendarWeekDay} ${calendarNumberWords[selectedCalendarDay]} de ${selectedCalendarMonth.toLowerCase()} de ${selectedCalendarYear}`;
+
+  useEffect(() => {
+    if (selectedCalendarDay > calendarMaxDay) setSelectedCalendarDay(calendarMaxDay);
+  }, [calendarMaxDay, selectedCalendarDay]);
 
   useEffect(() => {
     if (!feedback) return;
@@ -2487,16 +2539,20 @@ const LearningModule = () => {
     };
 
     const pickMultiplicationChallenge = () => {
-      const groups = Math.floor(Math.random() * 4) + 2;
-      const perGroup = Math.floor(Math.random() * 4) + 1;
+      const groups = Math.floor(Math.random() * 9) + 2;
+      const perGroup = Math.floor(Math.random() * 9) + 1;
+      const item = multiplicationVisualItems[Math.floor(Math.random() * multiplicationVisualItems.length)];
       const answer = groups * perGroup;
-      setMultiplicationChallenge({ groups, perGroup });
+      setMultiplicationChallenge({ groups, perGroup, emoji: item.emoji, label: item.label });
       setMultiplicationOptions(makeMultiplicationOptions(answer));
+      setMultiplicationTypedAnswer('');
     };
 
     const pickMultiplicationTable = () => {
-      const tables = [2, 3, 4, 5];
-      setMultiplicationTable(tables[Math.floor(Math.random() * tables.length)]);
+      const tables = [2, 3, 4, 5, 6, 7, 8, 9, 10];
+      const currentIndex = tables.indexOf(multiplicationTable);
+      const nextIndex = currentIndex >= 0 ? (currentIndex + 1) % tables.length : 0;
+      setMultiplicationTable(tables[nextIndex]);
     };
 
     const handleMultiplicationAnswer = (selected: number) => {
@@ -2513,6 +2569,23 @@ const LearningModule = () => {
         updateMultiplicationProgress(false);
       }
       window.setTimeout(pickMultiplicationChallenge, 1300);
+    };
+
+    const handleMultiplicationTypedAnswer = () => {
+      const answer = multiplicationChallenge.groups * multiplicationChallenge.perGroup;
+      const selected = Number(multiplicationTypedAnswer);
+      if (selected === answer) {
+        setFeedback('Lo lograste');
+        playFeedbackTone(true);
+        speak(`${multiplicationChallenge.groups} por ${multiplicationChallenge.perGroup} es ${answer}`);
+        updateMultiplicationProgress(true);
+        window.setTimeout(pickMultiplicationChallenge, 1300);
+      } else {
+        setFeedback('Buen intento, contemos los grupos otra vez');
+        playFeedbackTone(false);
+        speak(`${multiplicationChallenge.groups} por ${multiplicationChallenge.perGroup}`);
+        updateMultiplicationProgress(false);
+      }
     };
 
     const pickCountChallenge = () => {
@@ -2699,25 +2772,26 @@ const LearningModule = () => {
               <h4 className="text-3xl font-child font-bold">Multiplicaciones visuales</h4>
               <p className="text-slate-500">Contamos grupos repetidos con objetos simples</p>
             </div>
-            <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 max-w-4xl mx-auto">
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 max-w-6xl mx-auto">
               <button onClick={() => { setMultiplicationMode('grupos'); pickMultiplicationChallenge(); }} className={cn('btn-child py-4 text-xl', multiplicationMode === 'grupos' ? 'bg-amber-100 border-amber-300 text-amber-700' : 'bg-white border-slate-100')}>Grupos de objetos</button>
               <button onClick={() => { setMultiplicationMode('cuenta'); pickMultiplicationChallenge(); }} className={cn('btn-child py-4 text-xl', multiplicationMode === 'cuenta' ? 'bg-amber-100 border-amber-300 text-amber-700' : 'bg-white border-slate-100')}>Cuenta los grupos</button>
               <button onClick={() => { setMultiplicationMode('tabla'); pickMultiplicationTable(); }} className={cn('btn-child py-4 text-xl', multiplicationMode === 'tabla' ? 'bg-amber-100 border-amber-300 text-amber-700' : 'bg-white border-slate-100')}>Tabla visual</button>
+              <button onClick={() => { setMultiplicationMode('escribe'); pickMultiplicationChallenge(); }} className={cn('btn-child py-4 text-xl', multiplicationMode === 'escribe' ? 'bg-amber-100 border-amber-300 text-amber-700' : 'bg-white border-slate-100')}>Escribe el resultado</button>
             </div>
 
             <div className="max-w-4xl mx-auto space-y-6">
               {multiplicationMode === 'grupos' && (
                 <div className="card-lumi text-center bg-amber-50 border-amber-100 space-y-4">
-                  <p className="text-3xl font-child font-bold text-amber-800">{multiplicationChallenge.groups} grupos de {multiplicationChallenge.perGroup} manzanas</p>
+                  <p className="text-3xl font-child font-bold text-amber-800">{multiplicationChallenge.groups} grupos de {multiplicationChallenge.perGroup} {multiplicationChallenge.label}</p>
                   <div className="flex flex-wrap justify-center gap-4" aria-hidden="true">
                     {Array.from({ length: multiplicationChallenge.groups }, (_, groupIndex) => (
                       <span key={groupIndex} className="text-4xl bg-white rounded-3xl px-4 py-3 border border-amber-100 shadow-soft">
-                        {Array.from({ length: multiplicationChallenge.perGroup }, () => '🍎').join(' ')}
+                        {Array.from({ length: multiplicationChallenge.perGroup }, () => multiplicationChallenge.emoji).join(' ')}
                       </span>
                     ))}
                   </div>
                   <p className="text-4xl font-black text-amber-700">{multiplicationChallenge.groups} x {multiplicationChallenge.perGroup} = {multiplicationChallenge.groups * multiplicationChallenge.perGroup}</p>
-                  <button onClick={() => { speak(`${multiplicationChallenge.groups} por ${multiplicationChallenge.perGroup} es ${multiplicationChallenge.groups * multiplicationChallenge.perGroup}`); playFeedbackTone(true); updateMultiplicationProgress(true); setFeedback('Lo lograste'); }} className="btn-child bg-white border-amber-200 text-amber-700 px-6 py-4 text-xl">Practiqué este grupo</button>
+                  <button onClick={() => { speak(`${multiplicationChallenge.groups} por ${multiplicationChallenge.perGroup} es ${multiplicationChallenge.groups * multiplicationChallenge.perGroup}`); playFeedbackTone(true); updateMultiplicationProgress(true); setFeedback('Lo lograste'); window.setTimeout(pickMultiplicationChallenge, 900); }} className="btn-child bg-white border-amber-200 text-amber-700 px-6 py-4 text-xl">Practiqué este grupo</button>
                 </div>
               )}
 
@@ -2728,7 +2802,7 @@ const LearningModule = () => {
                     <div className="flex flex-wrap justify-center gap-4" aria-hidden="true">
                       {Array.from({ length: multiplicationChallenge.groups }, (_, groupIndex) => (
                         <span key={groupIndex} className="text-4xl bg-white rounded-3xl px-4 py-3 border border-amber-100 shadow-soft">
-                          {Array.from({ length: multiplicationChallenge.perGroup }, () => '🍎').join(' ')}
+                          {Array.from({ length: multiplicationChallenge.perGroup }, () => multiplicationChallenge.emoji).join(' ')}
                         </span>
                       ))}
                     </div>
@@ -2738,6 +2812,33 @@ const LearningModule = () => {
                   </div>
                 </>
               )}
+
+              {multiplicationMode === 'escribe' && (
+                <div className="card-lumi text-center bg-amber-50 border-amber-100 space-y-5">
+                  <p className="text-3xl font-child font-bold text-amber-800">Escribe el resultado</p>
+                  <p className="text-5xl font-black text-amber-700">{multiplicationChallenge.groups} x {multiplicationChallenge.perGroup} = ?</p>
+                  <div className="flex flex-wrap justify-center gap-4" aria-hidden="true">
+                    {Array.from({ length: multiplicationChallenge.groups }, (_, groupIndex) => (
+                      <span key={groupIndex} className="text-4xl bg-white rounded-3xl px-4 py-3 border border-amber-100 shadow-soft">
+                        {Array.from({ length: multiplicationChallenge.perGroup }, () => multiplicationChallenge.emoji).join(' ')}
+                      </span>
+                    ))}
+                  </div>
+                  <div className="flex flex-col sm:flex-row items-center justify-center gap-4">
+                    <input
+                      type="number"
+                      min="1"
+                      max="100"
+                      value={multiplicationTypedAnswer}
+                      onChange={(event) => setMultiplicationTypedAnswer(event.target.value)}
+                      className="w-full sm:w-40 rounded-3xl border-2 border-amber-200 bg-white px-5 py-4 text-center text-4xl font-black text-amber-700 focus:outline-none focus:ring-4 focus:ring-amber-100"
+                      aria-label="Resultado de la multiplicación"
+                    />
+                    <button onClick={handleMultiplicationTypedAnswer} className="btn-child bg-amber-100 border-amber-200 text-amber-800 px-8 py-4 text-xl">Revisar</button>
+                  </div>
+                </div>
+              )}
+
 
               {multiplicationMode === 'tabla' && (
                 <div className="card-lumi bg-amber-50 border-amber-100 space-y-4">
@@ -2755,7 +2856,7 @@ const LearningModule = () => {
                         <p className="text-3xl font-black text-amber-700">{multiplicationTable} x {value} = {multiplicationTable * value}</p>
                         <div className="flex flex-wrap justify-center gap-2" aria-hidden="true">
                           {Array.from({ length: value }, (_, groupIndex) => (
-                            <span key={groupIndex} className="text-2xl bg-amber-50 rounded-2xl px-3 py-2">{Array.from({ length: multiplicationTable }, () => '🍎').join(' ')}</span>
+                            <span key={groupIndex} className="text-2xl bg-amber-50 rounded-2xl px-3 py-2">{Array.from({ length: multiplicationTable }, () => multiplicationVisualItems[value % multiplicationVisualItems.length].emoji).join(' ')}</span>
                           ))}
                         </div>
                       </button>
@@ -2788,20 +2889,7 @@ const LearningModule = () => {
       { name: 'Sábado', emoji: '🧸', phrase: 'Sábado puede ser día de descanso o juego.' },
       { name: 'Domingo', emoji: '☀️', phrase: 'Domingo puede ser día tranquilo en familia.' },
     ];
-    const months = [
-      { name: 'Enero', emoji: '❄️', phrase: 'Enero empieza el año.' },
-      { name: 'Febrero', emoji: '💛', phrase: 'Febrero es el segundo mes.' },
-      { name: 'Marzo', emoji: '🌷', phrase: 'Marzo trae cambios de estación.' },
-      { name: 'Abril', emoji: '🌧️', phrase: 'Abril es el cuarto mes.' },
-      { name: 'Mayo', emoji: '🌸', phrase: 'Mayo llega con flores.' },
-      { name: 'Junio', emoji: '🌤️', phrase: 'Junio está a la mitad del año.' },
-      { name: 'Julio', emoji: '🏖️', phrase: 'Julio es el séptimo mes.' },
-      { name: 'Agosto', emoji: '🌻', phrase: 'Agosto sigue en verano.' },
-      { name: 'Septiembre', emoji: '🍂', phrase: 'Septiembre inicia una nueva parte del año.' },
-      { name: 'Octubre', emoji: '🎃', phrase: 'Octubre es el décimo mes.' },
-      { name: 'Noviembre', emoji: '🕯️', phrase: 'Noviembre está cerca del final del año.' },
-      { name: 'Diciembre', emoji: '🎁', phrase: 'Diciembre cierra el año.' },
-    ];
+    const months = calendarMonthOptions;
 
     return (
       <div className="space-y-10">
@@ -2809,6 +2897,67 @@ const LearningModule = () => {
           <h3 className="text-4xl font-child font-bold">Días y meses</h3>
           <p className="text-slate-500 mt-2">Aprendamos el tiempo con tarjetas tranquilas y visuales</p>
         </div>
+
+        <section className="grid grid-cols-1 lg:grid-cols-[1.4fr_0.8fr] gap-5 max-w-6xl mx-auto">
+          <div className="card-lumi bg-white border-sky-100 space-y-5">
+            <div className="text-center">
+              <Calendar size={42} className="mx-auto text-sky-600 mb-2" />
+              <h4 className="text-3xl font-child font-bold text-sky-800">Arma una fecha</h4>
+              <p className="text-slate-600 mt-1">Elige día, número, mes y año para escucharlo con calma.</p>
+            </div>
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+              <label className="space-y-2 text-left">
+                <span className="font-bold text-slate-700">Día de la semana</span>
+                <select value={selectedCalendarWeekDay} onChange={(event) => setSelectedCalendarWeekDay(event.target.value)} className="w-full rounded-3xl border-2 border-sky-100 bg-sky-50 px-4 py-3 font-semibold text-sky-800 focus:outline-none focus:ring-4 focus:ring-sky-100">
+                  {calendarDayNames.map((day) => <option key={day} value={day}>{day}</option>)}
+                </select>
+              </label>
+              <label className="space-y-2 text-left">
+                <span className="font-bold text-slate-700">Número de día</span>
+                <select value={selectedCalendarDay} onChange={(event) => setSelectedCalendarDay(Number(event.target.value))} className="w-full rounded-3xl border-2 border-sky-100 bg-sky-50 px-4 py-3 font-semibold text-sky-800 focus:outline-none focus:ring-4 focus:ring-sky-100">
+                  {Array.from({ length: calendarMaxDay }, (_, index) => index + 1).map((day) => <option key={day} value={day}>{day}</option>)}
+                </select>
+              </label>
+              <label className="space-y-2 text-left">
+                <span className="font-bold text-slate-700">Mes</span>
+                <select value={selectedCalendarMonth} onChange={(event) => setSelectedCalendarMonth(event.target.value)} className="w-full rounded-3xl border-2 border-sky-100 bg-sky-50 px-4 py-3 font-semibold text-sky-800 focus:outline-none focus:ring-4 focus:ring-sky-100">
+                  {calendarMonthOptions.map((month) => <option key={month.name} value={month.name}>{month.name}</option>)}
+                </select>
+              </label>
+              <label className="space-y-2 text-left">
+                <span className="font-bold text-slate-700">Año</span>
+                <select value={selectedCalendarYear} onChange={(event) => setSelectedCalendarYear(Number(event.target.value))} className="w-full rounded-3xl border-2 border-sky-100 bg-sky-50 px-4 py-3 font-semibold text-sky-800 focus:outline-none focus:ring-4 focus:ring-sky-100">
+                  {Array.from({ length: 9 }, (_, index) => 2024 + index).map((year) => <option key={year} value={year}>{year}</option>)}
+                </select>
+              </label>
+            </div>
+            <div className="bg-sky-50 border border-sky-100 rounded-3xl p-4 text-center">
+              <p className="text-2xl font-child font-bold text-sky-800">{selectedCalendarPhrase}</p>
+              <button onClick={() => speak(selectedCalendarPhrase)} className="btn-child bg-white border-sky-200 text-sky-700 px-6 py-4 text-xl mt-4">Escuchar fecha</button>
+            </div>
+          </div>
+
+          <aside className="card-lumi bg-lumi-soft-yellow border-amber-100 space-y-3">
+            <div className="flex items-center gap-3">
+              <span className="text-4xl" aria-hidden="true">{selectedHolidayNote?.emoji ?? '📝'}</span>
+              <div>
+                <h4 className="text-2xl font-child font-bold text-amber-800">Notas de fecha</h4>
+                <p className="text-sm text-amber-700">Datos curiosos de México</p>
+              </div>
+            </div>
+            {selectedHolidayNote ? (
+              <div className="bg-white/80 border border-amber-100 rounded-3xl p-4 space-y-2">
+                <p className="text-xl font-bold text-amber-800">{selectedHolidayNote.title}</p>
+                <p className="text-slate-700">{selectedHolidayNote.note}</p>
+              </div>
+            ) : (
+              <div className="bg-white/80 border border-amber-100 rounded-3xl p-4 space-y-2">
+                <p className="text-xl font-bold text-amber-800">Sin nota especial</p>
+                <p className="text-slate-700">Si eliges Navidad, Halloween o Día de Muertos, aquí aparecerá una nota tranquila.</p>
+              </div>
+            )}
+          </aside>
+        </section>
 
         <section className="space-y-4">
           <div className="card-lumi bg-sky-50 border-sky-100 text-center max-w-3xl mx-auto">
