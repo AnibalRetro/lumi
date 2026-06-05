@@ -88,6 +88,8 @@ interface LearningProgress {
   readingWordsSeen?: string[];
   readingPhrasesSeen?: string[];
   numbersSeen?: number[];
+  shapesSeen?: string[];
+  colorsSeen?: string[];
   additionExercisesDone?: number;
   subtractionExercisesDone?: number;
   multiplicationExercisesDone?: number;
@@ -101,6 +103,7 @@ interface LearningProgress {
   additionAttempts?: number;
   subtractionAttempts?: number;
   multiplicationAttempts?: number;
+  shapesColorsAttempts?: number;
   alphabetCorrectAnswers?: number;
   syllableCorrectAnswers?: number;
   readingCorrectAnswers?: number;
@@ -108,6 +111,7 @@ interface LearningProgress {
   additionCorrectAnswers?: number;
   subtractionCorrectAnswers?: number;
   multiplicationCorrectAnswers?: number;
+  shapesColorsCorrectAnswers?: number;
   alphabetLastPracticeAt?: string | null;
   syllableLastPracticeAt?: string | null;
   readingLastPracticeAt?: string | null;
@@ -115,6 +119,7 @@ interface LearningProgress {
   additionLastPracticeAt?: string | null;
   subtractionLastPracticeAt?: string | null;
   multiplicationLastPracticeAt?: string | null;
+  shapesColorsLastPracticeAt?: string | null;
 }
 
 const defaultPlanExamples: PlanChange[] = [
@@ -892,6 +897,10 @@ const ProgressSummaryPage = () => {
     { label: 'Multiplicaciones realizadas', value: learningProgress.multiplicationExercisesDone ?? 0 },
     { label: 'Aciertos (multiplicaciones)', value: learningProgress.multiplicationCorrectAnswers ?? 0 },
     { label: 'Intentos (multiplicaciones)', value: learningProgress.multiplicationAttempts ?? 0 },
+    { label: 'Formas practicadas', value: learningProgress.shapesSeen?.length ?? 0 },
+    { label: 'Colores practicados', value: learningProgress.colorsSeen?.length ?? 0 },
+    { label: 'Aciertos (formas y colores)', value: learningProgress.shapesColorsCorrectAnswers ?? 0 },
+    { label: 'Intentos (formas y colores)', value: learningProgress.shapesColorsAttempts ?? 0 },
   ];
 
   const hasData = summary.some((item) => item.value > 0);

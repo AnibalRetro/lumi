@@ -263,7 +263,7 @@ export const learningCategories: LearningCategory[] = [
     icon: 'Palette',
     color: 'bg-emerald-100 text-emerald-700 border-emerald-200',
     level: 'Nivel sugerido: Inicial (4-6)',
-    status: 'proximamente',
+    status: 'disponible',
     sectionId: 'formas-colores',
   },
   {

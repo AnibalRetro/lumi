@@ -78,6 +78,8 @@ interface LearningProgress {
   readingWordsSeen?: string[];
   readingPhrasesSeen?: string[];
   numbersSeen?: number[];
+  shapesSeen?: string[];
+  colorsSeen?: string[];
   additionExercisesDone?: number;
   subtractionExercisesDone?: number;
   multiplicationExercisesDone?: number;
@@ -89,6 +91,7 @@ interface LearningProgress {
   additionAttempts?: number;
   subtractionAttempts?: number;
   multiplicationAttempts?: number;
+  shapesColorsAttempts?: number;
   correctAnswers: number;
   alphabetCorrectAnswers?: number;
   syllableCorrectAnswers?: number;
@@ -97,6 +100,7 @@ interface LearningProgress {
   additionCorrectAnswers?: number;
   subtractionCorrectAnswers?: number;
   multiplicationCorrectAnswers?: number;
+  shapesColorsCorrectAnswers?: number;
   lastPracticeAt: string | null;
   alphabetLastPracticeAt?: string | null;
   syllableLastPracticeAt?: string | null;
@@ -105,6 +109,7 @@ interface LearningProgress {
   additionLastPracticeAt?: string | null;
   subtractionLastPracticeAt?: string | null;
   multiplicationLastPracticeAt?: string | null;
+  shapesColorsLastPracticeAt?: string | null;
 }
 
 // --- Helpers ---
@@ -1362,6 +1367,27 @@ const multiplicationVisualItems = [
   { emoji: '🧸', label: 'ositos' },
 ];
 
+const shapeCards = [
+  { id: 'circulo', name: 'Círculo', visual: '●' },
+  { id: 'cuadrado', name: 'Cuadrado', visual: '■' },
+  { id: 'triangulo', name: 'Triángulo', visual: '▲' },
+  { id: 'rectangulo', name: 'Rectángulo', visual: '▰' },
+  { id: 'estrella', name: 'Estrella', visual: '★' },
+  { id: 'corazon', name: 'Corazón', visual: '♥' },
+];
+const colorCards = [
+  { id: 'rojo', name: 'Rojo', hex: '#ef4444' },
+  { id: 'azul', name: 'Azul', hex: '#3b82f6' },
+  { id: 'amarillo', name: 'Amarillo', hex: '#facc15' },
+  { id: 'verde', name: 'Verde', hex: '#22c55e' },
+  { id: 'morado', name: 'Morado', hex: '#8b5cf6' },
+  { id: 'naranja', name: 'Naranja', hex: '#f97316' },
+  { id: 'rosa', name: 'Rosa', hex: '#ec4899' },
+  { id: 'cafe', name: 'Café', hex: '#92400e' },
+  { id: 'negro', name: 'Negro', hex: '#111827' },
+  { id: 'blanco', name: 'Blanco', hex: '#ffffff' },
+];
+
 const LearningModule = () => {
   const [activeSection, setActiveSection] = useState<string | null>(null);
   const { speak } = useSpeech();
@@ -1525,6 +1551,16 @@ const LearningModule = () => {
   const [selectedCalendarDay, setSelectedCalendarDay] = useState(4);
   const [selectedCalendarMonth, setSelectedCalendarMonth] = useState('Junio');
   const [selectedCalendarYear, setSelectedCalendarYear] = useState(2024);
+  const [shapesColorsMode, setShapesColorsMode] = useState<'formas' | 'encuentra' | 'colores' | 'clasifica'>('formas');
+  const [targetShape, setTargetShape] = useState(shapeCards[0]);
+  const [shapeOptions, setShapeOptions] = useState(shapeCards.slice(0, 4));
+  const [classificationPrompt, setClassificationPrompt] = useState<'color' | 'shapeColor'>('color');
+  const [classificationTarget, setClassificationTarget] = useState({ shape: shapeCards[2], color: colorCards[1] });
+  const [classificationOptions, setClassificationOptions] = useState([
+    { shape: shapeCards[2], color: colorCards[1] },
+    { shape: shapeCards[0], color: colorCards[0] },
+    { shape: shapeCards[4], color: colorCards[3] },
+  ]);
 
   const selectedCalendarMonthData = calendarMonthOptions.find((month) => month.name === selectedCalendarMonth) ?? calendarMonthOptions[0];
   const calendarMaxDay = selectedCalendarMonthData.maxDays;
@@ -1565,6 +1601,8 @@ const LearningModule = () => {
         readingWordsSeen: current.readingWordsSeen ?? [],
         readingPhrasesSeen: current.readingPhrasesSeen ?? [],
         numbersSeen: current.numbersSeen ?? [],
+        shapesSeen: current.shapesSeen ?? [],
+        colorsSeen: current.colorsSeen ?? [],
         additionExercisesDone: current.additionExercisesDone ?? 0,
         subtractionExercisesDone: current.subtractionExercisesDone ?? 0,
         multiplicationExercisesDone: current.multiplicationExercisesDone ?? 0,
@@ -1576,6 +1614,7 @@ const LearningModule = () => {
         additionAttempts: current.additionAttempts ?? 0,
         subtractionAttempts: current.subtractionAttempts ?? 0,
         multiplicationAttempts: current.multiplicationAttempts ?? 0,
+        shapesColorsAttempts: current.shapesColorsAttempts ?? 0,
         correctAnswers: current.correctAnswers + (isCorrect ? 1 : 0),
         alphabetCorrectAnswers: current.alphabetCorrectAnswers ?? 0,
         syllableCorrectAnswers: current.syllableCorrectAnswers ?? 0,
@@ -1584,6 +1623,7 @@ const LearningModule = () => {
         additionCorrectAnswers: current.additionCorrectAnswers ?? 0,
         subtractionCorrectAnswers: current.subtractionCorrectAnswers ?? 0,
         multiplicationCorrectAnswers: current.multiplicationCorrectAnswers ?? 0,
+        shapesColorsCorrectAnswers: current.shapesColorsCorrectAnswers ?? 0,
         lastPracticeAt: new Date().toISOString(),
         alphabetLastPracticeAt: current.alphabetLastPracticeAt ?? null,
         syllableLastPracticeAt: current.syllableLastPracticeAt ?? null,
@@ -1592,6 +1632,7 @@ const LearningModule = () => {
         additionLastPracticeAt: current.additionLastPracticeAt ?? null,
         subtractionLastPracticeAt: current.subtractionLastPracticeAt ?? null,
         multiplicationLastPracticeAt: current.multiplicationLastPracticeAt ?? null,
+        shapesColorsLastPracticeAt: current.shapesColorsLastPracticeAt ?? null,
       };
       setStorageItem(LUMI_STORAGE_KEYS.learningProgress, nextProgress);
     };
@@ -2865,6 +2906,163 @@ const LearningModule = () => {
                   <button onClick={pickMultiplicationTable} className="btn-child bg-white border-amber-200 text-amber-700 px-6 py-4 text-xl w-full sm:w-auto mx-auto block">Ver otra tabla</button>
                 </div>
               )}
+            </div>
+          </div>
+        )}
+
+        {feedback && (
+          <div className="max-w-3xl mx-auto text-center bg-lumi-soft-yellow border border-amber-200 rounded-3xl px-6 py-4">
+            <p className="text-amber-800 font-bold text-2xl">{feedback}</p>
+          </div>
+        )}
+      </div>
+    );
+  }
+
+
+  if (activeSection === 'formas-colores') {
+    const updateShapesColorsProgress = (isCorrect: boolean, seenShape?: string, seenColor?: string, countAttempt = true) => {
+      const current = getStorageItem<LearningProgress>(LUMI_STORAGE_KEYS.learningProgress, {
+        vowelsSeen: [],
+        attempts: 0,
+        correctAnswers: 0,
+        lastPracticeAt: null,
+      }) ?? {
+        vowelsSeen: [],
+        attempts: 0,
+        correctAnswers: 0,
+        lastPracticeAt: null,
+      };
+      const currentShapes = current.shapesSeen ?? [];
+      const currentColors = current.colorsSeen ?? [];
+      setStorageItem(LUMI_STORAGE_KEYS.learningProgress, {
+        ...current,
+        shapesSeen: seenShape && !currentShapes.includes(seenShape) ? [...currentShapes, seenShape] : currentShapes,
+        colorsSeen: seenColor && !currentColors.includes(seenColor) ? [...currentColors, seenColor] : currentColors,
+        shapesColorsAttempts: (current.shapesColorsAttempts ?? 0) + (countAttempt ? 1 : 0),
+        shapesColorsCorrectAnswers: (current.shapesColorsCorrectAnswers ?? 0) + (countAttempt && isCorrect ? 1 : 0),
+        shapesColorsLastPracticeAt: new Date().toISOString(),
+      });
+    };
+
+    const pickShapeChallenge = () => {
+      const nextShape = shapeCards[Math.floor(Math.random() * shapeCards.length)];
+      const options = [nextShape, ...shapeCards.filter((shape) => shape.id !== nextShape.id).sort(() => Math.random() - 0.5).slice(0, 3)];
+      setTargetShape(nextShape);
+      setShapeOptions(options.sort(() => Math.random() - 0.5));
+    };
+
+    const pickClassificationChallenge = () => {
+      const nextShape = shapeCards[Math.floor(Math.random() * shapeCards.length)];
+      const nextColor = colorCards[Math.floor(Math.random() * colorCards.length)];
+      const promptType = Math.random() > 0.5 ? 'shapeColor' : 'color';
+      const distractors = shapeCards
+        .filter((shape) => shape.id !== nextShape.id)
+        .sort(() => Math.random() - 0.5)
+        .slice(0, 2)
+        .map((shape, index) => ({ shape, color: colorCards[(colorCards.findIndex((color) => color.id === nextColor.id) + index + 2) % colorCards.length] }));
+      setClassificationPrompt(promptType);
+      setClassificationTarget({ shape: nextShape, color: nextColor });
+      setClassificationOptions([{ shape: nextShape, color: nextColor }, ...distractors].sort(() => Math.random() - 0.5));
+    };
+
+    const handleShapeAnswer = (selectedShape: typeof shapeCards[number]) => {
+      speak(selectedShape.name);
+      if (selectedShape.id === targetShape.id) {
+        setFeedback('Lo lograste');
+        playFeedbackTone(true);
+        updateShapesColorsProgress(true, selectedShape.name);
+      } else {
+        setFeedback('Buen intento, busquemos otra vez');
+        playFeedbackTone(false);
+        updateShapesColorsProgress(false, selectedShape.name);
+      }
+      window.setTimeout(pickShapeChallenge, 1200);
+    };
+
+    const handleClassificationAnswer = (option: { shape: typeof shapeCards[number]; color: typeof colorCards[number] }) => {
+      speak(`${option.shape.name} ${option.color.name}`);
+      const isCorrect = option.shape.id === classificationTarget.shape.id && option.color.id === classificationTarget.color.id;
+      if (isCorrect) {
+        setFeedback('Lo lograste');
+        playFeedbackTone(true);
+        updateShapesColorsProgress(true, option.shape.name, option.color.name);
+      } else {
+        setFeedback('Buen intento, busquemos otra vez');
+        playFeedbackTone(false);
+        updateShapesColorsProgress(false, option.shape.name, option.color.name);
+      }
+      window.setTimeout(pickClassificationChallenge, 1200);
+    };
+
+    return (
+      <div className="space-y-8">
+        <div className="text-center max-w-3xl mx-auto">
+          <h3 className="text-4xl font-child font-bold">Formas y colores</h3>
+          <p className="text-slate-500 mt-2">Reconocemos figuras, colores y objetos de forma tranquila</p>
+        </div>
+
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 max-w-6xl mx-auto">
+          <button onClick={() => setShapesColorsMode('formas')} className={cn('btn-child py-4 text-xl', shapesColorsMode === 'formas' ? 'bg-emerald-100 border-emerald-300 text-emerald-700' : 'bg-white border-slate-100')}>Conoce las formas</button>
+          <button onClick={() => { setShapesColorsMode('encuentra'); pickShapeChallenge(); }} className={cn('btn-child py-4 text-xl', shapesColorsMode === 'encuentra' ? 'bg-emerald-100 border-emerald-300 text-emerald-700' : 'bg-white border-slate-100')}>Encuentra la forma</button>
+          <button onClick={() => setShapesColorsMode('colores')} className={cn('btn-child py-4 text-xl', shapesColorsMode === 'colores' ? 'bg-emerald-100 border-emerald-300 text-emerald-700' : 'bg-white border-slate-100')}>Conoce los colores</button>
+          <button onClick={() => { setShapesColorsMode('clasifica'); pickClassificationChallenge(); }} className={cn('btn-child py-4 text-xl', shapesColorsMode === 'clasifica' ? 'bg-emerald-100 border-emerald-300 text-emerald-700' : 'bg-white border-slate-100')}>Clasifica</button>
+        </div>
+
+        {shapesColorsMode === 'formas' && (
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5 max-w-5xl mx-auto">
+            {shapeCards.map((shape) => (
+              <button key={shape.id} onClick={() => { speak(shape.name); updateShapesColorsProgress(true, shape.name, undefined, false); }} className="card-lumi bg-white border-emerald-100 text-center space-y-3 hover:bg-emerald-50 transition-colors">
+                <p className="text-8xl text-emerald-500" aria-hidden="true">{shape.visual}</p>
+                <p className="text-3xl font-child font-bold text-emerald-800">{shape.name}</p>
+              </button>
+            ))}
+          </div>
+        )}
+
+        {shapesColorsMode === 'encuentra' && (
+          <div className="max-w-5xl mx-auto space-y-6">
+            <div className="card-lumi bg-emerald-50 border-emerald-100 text-center">
+              <p className="text-3xl font-child font-bold text-emerald-800">Toca el {targetShape.name.toLowerCase()}</p>
+            </div>
+            <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
+              {shapeOptions.map((shape) => (
+                <button key={shape.id} onClick={() => handleShapeAnswer(shape)} className="btn-child bg-white border-emerald-100 py-8 text-center space-y-3">
+                  <p className="text-7xl text-emerald-500" aria-hidden="true">{shape.visual}</p>
+                  <p className="text-xl font-bold text-slate-700">{shape.name}</p>
+                </button>
+              ))}
+            </div>
+          </div>
+        )}
+
+        {shapesColorsMode === 'colores' && (
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-4 max-w-6xl mx-auto">
+            {colorCards.map((color) => (
+              <button key={color.id} onClick={() => { speak(color.name); updateShapesColorsProgress(true, undefined, color.name, false); }} className="card-lumi bg-white border-emerald-100 text-center space-y-3 hover:bg-emerald-50 transition-colors">
+                <span className="block w-24 h-24 rounded-full border-4 border-white shadow-soft mx-auto" style={{ backgroundColor: color.hex, outline: '2px solid rgba(15, 23, 42, 0.08)' }} aria-hidden="true" />
+                <p className="text-2xl font-child font-bold text-slate-800">{color.name}</p>
+              </button>
+            ))}
+          </div>
+        )}
+
+        {shapesColorsMode === 'clasifica' && (
+          <div className="max-w-5xl mx-auto space-y-6">
+            <div className="card-lumi bg-emerald-50 border-emerald-100 text-center">
+              <p className="text-3xl font-child font-bold text-emerald-800">
+                {classificationPrompt === 'color'
+                  ? `Toca el objeto ${classificationTarget.color.name.toLowerCase()}`
+                  : `Toca el ${classificationTarget.shape.name.toLowerCase()} ${classificationTarget.color.name.toLowerCase()}`}
+              </p>
+            </div>
+            <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+              {classificationOptions.map((option) => (
+                <button key={`${option.shape.id}-${option.color.id}`} onClick={() => handleClassificationAnswer(option)} className="btn-child bg-white border-emerald-100 py-8 text-center space-y-3">
+                  <p className="text-7xl" style={{ color: option.color.hex, textShadow: option.color.id === 'blanco' ? '0 0 0 #94a3b8' : undefined }} aria-hidden="true">{option.shape.visual}</p>
+                  <p className="text-xl font-bold text-slate-700">{option.shape.name} {option.color.name}</p>
+                </button>
+              ))}
             </div>
           </div>
         )}
