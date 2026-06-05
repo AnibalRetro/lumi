@@ -9,6 +9,8 @@ export const LUMI_STORAGE_KEYS = {
   needLogs: 'lumi_need_logs',
   planChanges: 'lumi_plan_changes',
   triggerLogs: 'lumi_trigger_logs',
+  learningSettings: 'lumi_learning_settings',
+  learningProgress: 'lumi_learning_progress',
 } as const;
 
 export const LUMI_STORAGE_DEFAULTS = {
@@ -34,6 +36,8 @@ export const LUMI_STORAGE_DEFAULTS = {
     activeId: null,
   },
   [LUMI_STORAGE_KEYS.triggerLogs]: [],
+  [LUMI_STORAGE_KEYS.learningSettings]: null,
+  [LUMI_STORAGE_KEYS.learningProgress]: null,
 } as const;
 
 const isBrowser = () => typeof window !== 'undefined' && typeof window.localStorage !== 'undefined';

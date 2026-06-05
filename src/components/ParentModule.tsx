@@ -73,6 +73,60 @@ interface ProgressLog {
   timestamp: string;
 }
 
+interface LearningSettings {
+  educationalLevel: string;
+  practiceAreas: string[];
+  activityStyle: string;
+  visualSupportLevel: string;
+  duration: string;
+}
+
+interface LearningProgress {
+  vowelsSeen: string[];
+  lettersSeen?: string[];
+  syllablesSeen?: string[];
+  readingWordsSeen?: string[];
+  readingPhrasesSeen?: string[];
+  numbersSeen?: number[];
+  shapesSeen?: string[];
+  colorsSeen?: string[];
+  memoryLevelUsed?: number;
+  memoryGamesDone?: number;
+  additionExercisesDone?: number;
+  subtractionExercisesDone?: number;
+  multiplicationExercisesDone?: number;
+  attempts: number;
+  correctAnswers: number;
+  lastPracticeAt: string | null;
+  alphabetAttempts?: number;
+  syllableAttempts?: number;
+  readingAttempts?: number;
+  numberAttempts?: number;
+  additionAttempts?: number;
+  subtractionAttempts?: number;
+  multiplicationAttempts?: number;
+  shapesColorsAttempts?: number;
+  memoryAttempts?: number;
+  alphabetCorrectAnswers?: number;
+  syllableCorrectAnswers?: number;
+  readingCorrectAnswers?: number;
+  numberCorrectAnswers?: number;
+  additionCorrectAnswers?: number;
+  subtractionCorrectAnswers?: number;
+  multiplicationCorrectAnswers?: number;
+  shapesColorsCorrectAnswers?: number;
+  memoryCorrectAnswers?: number;
+  alphabetLastPracticeAt?: string | null;
+  syllableLastPracticeAt?: string | null;
+  readingLastPracticeAt?: string | null;
+  numberLastPracticeAt?: string | null;
+  additionLastPracticeAt?: string | null;
+  subtractionLastPracticeAt?: string | null;
+  multiplicationLastPracticeAt?: string | null;
+  shapesColorsLastPracticeAt?: string | null;
+  memoryLastPracticeAt?: string | null;
+}
+
 const defaultPlanExamples: PlanChange[] = [
   { id: '1', beforeGoingTo: 'Parque', nowGoingTo: 'Casa', stillTheSame: 'Jugaremos juntos', canDoThis: 'Elegir un juego tranquilo', calmMessage: 'Estoy contigo, vamos paso a paso.' },
   { id: '2', beforeGoingTo: 'Escuela', nowGoingTo: 'Casa', stillTheSame: 'Tu rutina de comida sigue igual', canDoThis: 'Preparar tu espacio favorito', calmMessage: 'Respiramos juntos y seguimos el plan nuevo.' },
@@ -92,6 +146,19 @@ const readingLevelOptions = [
 const supportStyleOptions = ['Imágenes', 'Texto', 'Audio', 'Imágenes + texto', 'Imágenes + audio'];
 const sensitivityOptions = ['Ruido', 'Luz', 'Texturas', 'Multitudes', 'Cambios de rutina', 'Contacto físico', 'Olores'];
 const strategyOptions = ['Silencio', 'Audífonos', 'Respirar', 'Tomar agua', 'Descansar', 'Abrazo', 'Estar solo'];
+const educationalLevelOptions = ['Preescolar inicial', 'Preescolar avanzado', 'Primaria básica', 'Refuerzo general'];
+const practiceAreaOptions = ['Vocales', 'Alfabeto', 'Lectura', 'Números', 'Sumas', 'Restas', 'Multiplicaciones', 'Formas', 'Colores', 'Memoria'];
+const activityStyleOptions = ['Tocar respuesta', 'Arrastrar y ordenar', 'Ver y repetir', 'Escuchar y elegir', 'Juego libre'];
+const visualSupportOptions = ['Alto', 'Medio', 'Bajo'];
+const durationOptions = ['5 minutos', '10 minutos', '15 minutos'];
+
+const defaultLearningSettings: LearningSettings = {
+  educationalLevel: educationalLevelOptions[0],
+  practiceAreas: ['Vocales'],
+  activityStyle: activityStyleOptions[0],
+  visualSupportLevel: visualSupportOptions[0],
+  duration: durationOptions[0],
+};
 
 const defaultChildProfile: ChildProfile = {
   avatar: avatarOptions[0],
@@ -163,6 +230,13 @@ const ParentHome = () => {
       desc: 'Consulta un resumen amigable de actividad y logros.',
       icon: <BookText size={32} />,
       color: 'bg-yellow-50 border-yellow-100 text-yellow-700'
+    },
+    {
+      path: 'configuracion-aprendizaje',
+      label: 'Configuración de aprendizaje',
+      desc: 'Define nivel educativo y preferencias para adaptar actividades.',
+      icon: <BookText size={32} />,
+      color: 'bg-teal-50 border-teal-100 text-teal-700'
     },
     {
       path: 'directorio', 
@@ -444,6 +518,99 @@ const AccessibilityPage = () => {
   );
 };
 
+const LearningSettingsPage = () => {
+  const [settings, setSettings] = useState<LearningSettings>(() => {
+    return getStorageItem<LearningSettings>(LUMI_STORAGE_KEYS.learningSettings, defaultLearningSettings) ?? defaultLearningSettings;
+  });
+  const [saved, setSaved] = useState(false);
+
+  const togglePracticeArea = (value: string) => {
+    setSettings((prev) => {
+      const exists = prev.practiceAreas.includes(value);
+      const nextAreas = exists ? prev.practiceAreas.filter((item) => item !== value) : [...prev.practiceAreas, value];
+      return {
+        ...prev,
+        practiceAreas: nextAreas.length > 0 ? nextAreas : [value],
+      };
+    });
+  };
+
+  const handleSave = () => {
+    setStorageItem(LUMI_STORAGE_KEYS.learningSettings, settings);
+    setSaved(true);
+    setTimeout(() => setSaved(false), 1800);
+  };
+
+  return (
+    <div className="max-w-4xl mx-auto space-y-8">
+      <div className="space-y-2">
+        <h2 className="text-3xl font-bold text-slate-900">Configuración de aprendizaje</h2>
+        <p className="text-slate-500">Ajusta preferencias educativas para personalizar actividades infantiles.</p>
+      </div>
+
+      <div className="card-lumi space-y-8">
+        <label className="space-y-2 block">
+          <span className="text-sm font-semibold text-slate-700">Nivel educativo actual</span>
+          <select value={settings.educationalLevel} onChange={(e) => setSettings((prev) => ({ ...prev, educationalLevel: e.target.value }))} className="w-full bg-white border border-slate-200 rounded-2xl px-4 py-3">
+            {educationalLevelOptions.map((option) => <option key={option}>{option}</option>)}
+          </select>
+        </label>
+
+        <section className="space-y-3">
+          <p className="text-sm font-bold uppercase tracking-widest text-slate-400">Áreas a practicar</p>
+          <div className="flex flex-wrap gap-2">
+            {practiceAreaOptions.map((area) => (
+              <button
+                key={area}
+                type="button"
+                onClick={() => togglePracticeArea(area)}
+                className={cn(
+                  'px-4 py-2 rounded-full border text-sm font-medium transition-all',
+                  settings.practiceAreas.includes(area)
+                    ? 'bg-teal-100 border-teal-300 text-teal-800'
+                    : 'bg-white border-slate-200 text-slate-600'
+                )}
+              >
+                {area}
+              </button>
+            ))}
+          </div>
+        </section>
+
+        <label className="space-y-2 block">
+          <span className="text-sm font-semibold text-slate-700">Estilo de actividad preferido</span>
+          <select value={settings.activityStyle} onChange={(e) => setSettings((prev) => ({ ...prev, activityStyle: e.target.value }))} className="w-full bg-white border border-slate-200 rounded-2xl px-4 py-3">
+            {activityStyleOptions.map((option) => <option key={option}>{option}</option>)}
+          </select>
+        </label>
+
+        <div className="grid md:grid-cols-2 gap-4">
+          <label className="space-y-2">
+            <span className="text-sm font-semibold text-slate-700">Nivel de apoyo visual</span>
+            <select value={settings.visualSupportLevel} onChange={(e) => setSettings((prev) => ({ ...prev, visualSupportLevel: e.target.value }))} className="w-full bg-white border border-slate-200 rounded-2xl px-4 py-3">
+              {visualSupportOptions.map((option) => <option key={option}>{option}</option>)}
+            </select>
+          </label>
+
+          <label className="space-y-2">
+            <span className="text-sm font-semibold text-slate-700">Duración sugerida</span>
+            <select value={settings.duration} onChange={(e) => setSettings((prev) => ({ ...prev, duration: e.target.value }))} className="w-full bg-white border border-slate-200 rounded-2xl px-4 py-3">
+              {durationOptions.map((option) => <option key={option}>{option}</option>)}
+            </select>
+          </label>
+        </div>
+
+        <div className="flex items-center gap-4">
+          <button type="button" onClick={handleSave} className="bg-slate-900 text-white px-6 py-3 rounded-2xl font-bold hover:bg-lumi-olive transition-all">
+            Guardar configuración
+          </button>
+          {saved && <span className="text-sm font-semibold text-emerald-700">Configuración guardada en este dispositivo.</span>}
+        </div>
+      </div>
+    </div>
+  );
+};
+
 const PainHistoryPage = () => {
   const reports = getStorageItem<PainReport[]>(LUMI_STORAGE_KEYS.painReports, []) ?? [];
 
@@ -682,15 +849,130 @@ const TriggerLogsPage = () => {
 };
 
 const ProgressSummaryPage = () => {
+  const [, setLearningResetVersion] = useState(0);
+  const defaultLearningProgress: LearningProgress = {
+    vowelsSeen: [],
+    lettersSeen: [],
+    syllablesSeen: [],
+    readingWordsSeen: [],
+    readingPhrasesSeen: [],
+    numbersSeen: [],
+    shapesSeen: [],
+    colorsSeen: [],
+    memoryLevelUsed: 0,
+    memoryGamesDone: 0,
+    additionExercisesDone: 0,
+    subtractionExercisesDone: 0,
+    multiplicationExercisesDone: 0,
+    attempts: 0,
+    correctAnswers: 0,
+    lastPracticeAt: null,
+    alphabetAttempts: 0,
+    syllableAttempts: 0,
+    readingAttempts: 0,
+    numberAttempts: 0,
+    additionAttempts: 0,
+    subtractionAttempts: 0,
+    multiplicationAttempts: 0,
+    shapesColorsAttempts: 0,
+    memoryAttempts: 0,
+    alphabetCorrectAnswers: 0,
+    syllableCorrectAnswers: 0,
+    readingCorrectAnswers: 0,
+    numberCorrectAnswers: 0,
+    additionCorrectAnswers: 0,
+    subtractionCorrectAnswers: 0,
+    multiplicationCorrectAnswers: 0,
+    shapesColorsCorrectAnswers: 0,
+    memoryCorrectAnswers: 0,
+    alphabetLastPracticeAt: null,
+    syllableLastPracticeAt: null,
+    readingLastPracticeAt: null,
+    numberLastPracticeAt: null,
+    additionLastPracticeAt: null,
+    subtractionLastPracticeAt: null,
+    multiplicationLastPracticeAt: null,
+    shapesColorsLastPracticeAt: null,
+    memoryLastPracticeAt: null,
+  };
   const progressLogs = getStorageItem<ProgressLog[]>(LUMI_STORAGE_KEYS.progress, []) ?? [];
   const emotionLogs = getStorageItem<any[]>(LUMI_STORAGE_KEYS.emotionLogs, []) ?? [];
   const needLogs = getStorageItem<any[]>(LUMI_STORAGE_KEYS.needLogs, []) ?? [];
   const painReports = getStorageItem<PainReport[]>(LUMI_STORAGE_KEYS.painReports, []) ?? [];
   const planChangesState = getStorageItem<PlanChangesState>(LUMI_STORAGE_KEYS.planChanges, { items: [], activeId: null }) ?? { items: [], activeId: null };
+  const learningProgress = getStorageItem<LearningProgress>(LUMI_STORAGE_KEYS.learningProgress, defaultLearningProgress) ?? defaultLearningProgress;
 
   const routinesCompleted = progressLogs.filter((log) => log.achievement === 'Completé una rutina.').length;
   const calmZoneUses = progressLogs.filter((log) => log.achievement === 'Usé la zona de calma.').length;
   const planChangesViewed = progressLogs.filter((log) => log.achievement === 'Intenté algo nuevo.').length;
+
+  const learningActivityCounts = [
+    learningProgress.vowelsSeen.length,
+    learningProgress.lettersSeen?.length ?? 0,
+    learningProgress.syllablesSeen?.length ?? 0,
+    (learningProgress.readingWordsSeen?.length ?? 0) + (learningProgress.readingPhrasesSeen?.length ?? 0),
+    learningProgress.numbersSeen?.length ?? 0,
+    learningProgress.additionExercisesDone ?? 0,
+    learningProgress.subtractionExercisesDone ?? 0,
+    learningProgress.multiplicationExercisesDone ?? 0,
+    (learningProgress.shapesSeen?.length ?? 0) + (learningProgress.colorsSeen?.length ?? 0),
+    learningProgress.memoryGamesDone ?? 0,
+  ];
+  const activitiesPracticed = learningActivityCounts.filter((value) => value > 0).length;
+  const totalLearningCorrectAnswers =
+    (learningProgress.correctAnswers ?? 0) +
+    (learningProgress.alphabetCorrectAnswers ?? 0) +
+    (learningProgress.syllableCorrectAnswers ?? 0) +
+    (learningProgress.readingCorrectAnswers ?? 0) +
+    (learningProgress.numberCorrectAnswers ?? 0) +
+    (learningProgress.additionCorrectAnswers ?? 0) +
+    (learningProgress.subtractionCorrectAnswers ?? 0) +
+    (learningProgress.multiplicationCorrectAnswers ?? 0) +
+    (learningProgress.shapesColorsCorrectAnswers ?? 0) +
+    (learningProgress.memoryCorrectAnswers ?? 0);
+  const totalLearningAttempts =
+    (learningProgress.attempts ?? 0) +
+    (learningProgress.alphabetAttempts ?? 0) +
+    (learningProgress.syllableAttempts ?? 0) +
+    (learningProgress.readingAttempts ?? 0) +
+    (learningProgress.numberAttempts ?? 0) +
+    (learningProgress.additionAttempts ?? 0) +
+    (learningProgress.subtractionAttempts ?? 0) +
+    (learningProgress.multiplicationAttempts ?? 0) +
+    (learningProgress.shapesColorsAttempts ?? 0) +
+    (learningProgress.memoryAttempts ?? 0);
+  const latestLearningActivity = [
+    { label: 'Vocales', date: learningProgress.lastPracticeAt },
+    { label: 'Alfabeto', date: learningProgress.alphabetLastPracticeAt },
+    { label: 'Sílabas simples', date: learningProgress.syllableLastPracticeAt },
+    { label: 'Lectura inicial', date: learningProgress.readingLastPracticeAt },
+    { label: 'Números y conteo', date: learningProgress.numberLastPracticeAt },
+    { label: 'Sumas visuales', date: learningProgress.additionLastPracticeAt },
+    { label: 'Restas visuales', date: learningProgress.subtractionLastPracticeAt },
+    { label: 'Multiplicaciones visuales', date: learningProgress.multiplicationLastPracticeAt },
+    { label: 'Formas y colores', date: learningProgress.shapesColorsLastPracticeAt },
+    { label: 'Memoria y atención', date: learningProgress.memoryLastPracticeAt },
+  ]
+    .filter((item): item is { label: string; date: string } => Boolean(item.date))
+    .sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime())[0];
+  const learningSummary = [
+    { label: 'Actividades practicadas', value: activitiesPracticed },
+    { label: 'Última actividad realizada', value: latestLearningActivity?.label ?? 'Sin actividad registrada' },
+    { label: 'Vocales practicadas', value: learningProgress.vowelsSeen.length },
+    { label: 'Letras practicadas', value: learningProgress.lettersSeen?.length ?? 0 },
+    { label: 'Números practicados', value: learningProgress.numbersSeen?.length ?? 0 },
+    { label: 'Ejercicios de suma realizados', value: learningProgress.additionExercisesDone ?? 0 },
+    { label: 'Ejercicios de resta realizados', value: learningProgress.subtractionExercisesDone ?? 0 },
+    { label: 'Ejercicios de multiplicación realizados', value: learningProgress.multiplicationExercisesDone ?? 0 },
+    { label: 'Juegos de memoria realizados', value: learningProgress.memoryGamesDone ?? 0 },
+    { label: 'Aciertos totales', value: totalLearningCorrectAnswers },
+    { label: 'Intentos totales', value: totalLearningAttempts },
+  ];
+  const hasLearningData = learningSummary.some((item) => typeof item.value === 'number' && item.value > 0);
+  const resetLearningProgress = () => {
+    setStorageItem(LUMI_STORAGE_KEYS.learningProgress, defaultLearningProgress);
+    setLearningResetVersion((version) => version + 1);
+  };
 
   const summary = [
     { label: 'Rutinas completadas', value: routinesCompleted },
@@ -699,6 +981,39 @@ const ProgressSummaryPage = () => {
     { label: 'Veces que usó zona de calma', value: calmZoneUses },
     { label: 'Reportes de dolor', value: painReports.length },
     { label: 'Cambios de planes vistos', value: planChangesViewed || (planChangesState.activeId ? 1 : 0) },
+    { label: 'Vocales practicadas', value: learningProgress.vowelsSeen.length },
+    { label: 'Aciertos (aprendizaje)', value: learningProgress.correctAnswers },
+    { label: 'Intentos (aprendizaje)', value: learningProgress.attempts },
+    { label: 'Letras practicadas', value: learningProgress.lettersSeen?.length ?? 0 },
+    { label: 'Aciertos (alfabeto)', value: learningProgress.alphabetCorrectAnswers ?? 0 },
+    { label: 'Intentos (alfabeto)', value: learningProgress.alphabetAttempts ?? 0 },
+    { label: 'Sílabas practicadas', value: learningProgress.syllablesSeen?.length ?? 0 },
+    { label: 'Aciertos (sílabas)', value: learningProgress.syllableCorrectAnswers ?? 0 },
+    { label: 'Intentos (sílabas)', value: learningProgress.syllableAttempts ?? 0 },
+    { label: 'Palabras leídas', value: learningProgress.readingWordsSeen?.length ?? 0 },
+    { label: 'Frases leídas', value: learningProgress.readingPhrasesSeen?.length ?? 0 },
+    { label: 'Aciertos (lectura)', value: learningProgress.readingCorrectAnswers ?? 0 },
+    { label: 'Intentos (lectura)', value: learningProgress.readingAttempts ?? 0 },
+    { label: 'Números practicados', value: learningProgress.numbersSeen?.length ?? 0 },
+    { label: 'Aciertos (números)', value: learningProgress.numberCorrectAnswers ?? 0 },
+    { label: 'Intentos (números)', value: learningProgress.numberAttempts ?? 0 },
+    { label: 'Sumas realizadas', value: learningProgress.additionExercisesDone ?? 0 },
+    { label: 'Aciertos (sumas)', value: learningProgress.additionCorrectAnswers ?? 0 },
+    { label: 'Intentos (sumas)', value: learningProgress.additionAttempts ?? 0 },
+    { label: 'Restas realizadas', value: learningProgress.subtractionExercisesDone ?? 0 },
+    { label: 'Aciertos (restas)', value: learningProgress.subtractionCorrectAnswers ?? 0 },
+    { label: 'Intentos (restas)', value: learningProgress.subtractionAttempts ?? 0 },
+    { label: 'Multiplicaciones realizadas', value: learningProgress.multiplicationExercisesDone ?? 0 },
+    { label: 'Aciertos (multiplicaciones)', value: learningProgress.multiplicationCorrectAnswers ?? 0 },
+    { label: 'Intentos (multiplicaciones)', value: learningProgress.multiplicationAttempts ?? 0 },
+    { label: 'Formas practicadas', value: learningProgress.shapesSeen?.length ?? 0 },
+    { label: 'Colores practicados', value: learningProgress.colorsSeen?.length ?? 0 },
+    { label: 'Aciertos (formas y colores)', value: learningProgress.shapesColorsCorrectAnswers ?? 0 },
+    { label: 'Intentos (formas y colores)', value: learningProgress.shapesColorsAttempts ?? 0 },
+    { label: 'Juegos de memoria realizados', value: learningProgress.memoryGamesDone ?? 0 },
+    { label: 'Aciertos (memoria)', value: learningProgress.memoryCorrectAnswers ?? 0 },
+    { label: 'Intentos (memoria)', value: learningProgress.memoryAttempts ?? 0 },
+    { label: 'Nivel usado (memoria)', value: learningProgress.memoryLevelUsed ?? 0 },
   ];
 
   const hasData = summary.some((item) => item.value > 0);
@@ -709,6 +1024,39 @@ const ProgressSummaryPage = () => {
         <h2 className="text-3xl font-bold text-slate-900">Resumen simple</h2>
         <p className="text-slate-500">Vista rápida del uso reciente en este dispositivo.</p>
       </div>
+
+      <section className="card-lumi bg-lumi-soft-green border-emerald-100 space-y-5">
+        <div className="flex flex-col lg:flex-row lg:items-start lg:justify-between gap-4">
+          <div>
+            <h3 className="text-2xl font-child font-bold text-emerald-800">Resumen de progreso educativo</h3>
+            <p className="text-slate-600 mt-1">Uso de actividades educativas guardado en este dispositivo.</p>
+          </div>
+          <button onClick={resetLearningProgress} className="btn-child bg-white border-emerald-200 text-emerald-700 px-5 py-3 text-base">
+            Reiniciar progreso educativo
+          </button>
+        </div>
+
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+          {learningSummary.map((item) => (
+            <div key={item.label} className="bg-white/90 border border-emerald-100 rounded-3xl p-4 text-center">
+              <p className="text-xs uppercase tracking-widest text-emerald-600 font-bold">{item.label}</p>
+              <p className="text-2xl font-bold text-slate-800 mt-2">{item.value}</p>
+            </div>
+          ))}
+        </div>
+
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
+          <p className="rounded-3xl bg-white/80 border border-emerald-100 p-4 text-emerald-800 font-semibold">Ha practicado varias actividades.</p>
+          <p className="rounded-3xl bg-white/80 border border-emerald-100 p-4 text-emerald-800 font-semibold">Sigue reforzando poco a poco.</p>
+          <p className="rounded-3xl bg-white/80 border border-emerald-100 p-4 text-emerald-800 font-semibold">Las rutinas cortas ayudan a mantener la práctica.</p>
+        </div>
+
+        {!hasLearningData && (
+          <p className="text-center text-slate-600 bg-white/70 border border-emerald-100 rounded-3xl px-4 py-3">
+            Aún no hay práctica educativa registrada. Cuando use Aprendizaje, aquí aparecerá el resumen.
+          </p>
+        )}
+      </section>
 
       {!hasData ? (
         <div className="card-lumi text-center py-10">
@@ -916,6 +1264,7 @@ export default function ParentModule() {
         <Route path="/apoyo-casa" element={<div className="text-center py-20"><h2 className="text-3xl font-bold uppercase tracking-widest opacity-20">Contenido en construcción</h2></div>} />
         <Route path="/perfil-nino" element={<ChildProfilePage />} />
         <Route path="/accesibilidad" element={<AccessibilityPage />} />
+        <Route path="/configuracion-aprendizaje" element={<LearningSettingsPage />} />
         <Route path="/historial-me-duele" element={<PainHistoryPage />} />
         <Route path="/cambio-planes" element={<PlanChangesPage />} />
         <Route path="/registro-detonantes" element={<TriggerLogsPage />} />
