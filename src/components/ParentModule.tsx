@@ -849,26 +849,130 @@ const TriggerLogsPage = () => {
 };
 
 const ProgressSummaryPage = () => {
+  const [, setLearningResetVersion] = useState(0);
+  const defaultLearningProgress: LearningProgress = {
+    vowelsSeen: [],
+    lettersSeen: [],
+    syllablesSeen: [],
+    readingWordsSeen: [],
+    readingPhrasesSeen: [],
+    numbersSeen: [],
+    shapesSeen: [],
+    colorsSeen: [],
+    memoryLevelUsed: 0,
+    memoryGamesDone: 0,
+    additionExercisesDone: 0,
+    subtractionExercisesDone: 0,
+    multiplicationExercisesDone: 0,
+    attempts: 0,
+    correctAnswers: 0,
+    lastPracticeAt: null,
+    alphabetAttempts: 0,
+    syllableAttempts: 0,
+    readingAttempts: 0,
+    numberAttempts: 0,
+    additionAttempts: 0,
+    subtractionAttempts: 0,
+    multiplicationAttempts: 0,
+    shapesColorsAttempts: 0,
+    memoryAttempts: 0,
+    alphabetCorrectAnswers: 0,
+    syllableCorrectAnswers: 0,
+    readingCorrectAnswers: 0,
+    numberCorrectAnswers: 0,
+    additionCorrectAnswers: 0,
+    subtractionCorrectAnswers: 0,
+    multiplicationCorrectAnswers: 0,
+    shapesColorsCorrectAnswers: 0,
+    memoryCorrectAnswers: 0,
+    alphabetLastPracticeAt: null,
+    syllableLastPracticeAt: null,
+    readingLastPracticeAt: null,
+    numberLastPracticeAt: null,
+    additionLastPracticeAt: null,
+    subtractionLastPracticeAt: null,
+    multiplicationLastPracticeAt: null,
+    shapesColorsLastPracticeAt: null,
+    memoryLastPracticeAt: null,
+  };
   const progressLogs = getStorageItem<ProgressLog[]>(LUMI_STORAGE_KEYS.progress, []) ?? [];
   const emotionLogs = getStorageItem<any[]>(LUMI_STORAGE_KEYS.emotionLogs, []) ?? [];
   const needLogs = getStorageItem<any[]>(LUMI_STORAGE_KEYS.needLogs, []) ?? [];
   const painReports = getStorageItem<PainReport[]>(LUMI_STORAGE_KEYS.painReports, []) ?? [];
   const planChangesState = getStorageItem<PlanChangesState>(LUMI_STORAGE_KEYS.planChanges, { items: [], activeId: null }) ?? { items: [], activeId: null };
-  const learningProgress = getStorageItem<LearningProgress>(LUMI_STORAGE_KEYS.learningProgress, {
-    vowelsSeen: [],
-    attempts: 0,
-    correctAnswers: 0,
-    lastPracticeAt: null,
-  }) ?? {
-    vowelsSeen: [],
-    attempts: 0,
-    correctAnswers: 0,
-    lastPracticeAt: null,
-  };
+  const learningProgress = getStorageItem<LearningProgress>(LUMI_STORAGE_KEYS.learningProgress, defaultLearningProgress) ?? defaultLearningProgress;
 
   const routinesCompleted = progressLogs.filter((log) => log.achievement === 'Completé una rutina.').length;
   const calmZoneUses = progressLogs.filter((log) => log.achievement === 'Usé la zona de calma.').length;
   const planChangesViewed = progressLogs.filter((log) => log.achievement === 'Intenté algo nuevo.').length;
+
+  const learningActivityCounts = [
+    learningProgress.vowelsSeen.length,
+    learningProgress.lettersSeen?.length ?? 0,
+    learningProgress.syllablesSeen?.length ?? 0,
+    (learningProgress.readingWordsSeen?.length ?? 0) + (learningProgress.readingPhrasesSeen?.length ?? 0),
+    learningProgress.numbersSeen?.length ?? 0,
+    learningProgress.additionExercisesDone ?? 0,
+    learningProgress.subtractionExercisesDone ?? 0,
+    learningProgress.multiplicationExercisesDone ?? 0,
+    (learningProgress.shapesSeen?.length ?? 0) + (learningProgress.colorsSeen?.length ?? 0),
+    learningProgress.memoryGamesDone ?? 0,
+  ];
+  const activitiesPracticed = learningActivityCounts.filter((value) => value > 0).length;
+  const totalLearningCorrectAnswers =
+    (learningProgress.correctAnswers ?? 0) +
+    (learningProgress.alphabetCorrectAnswers ?? 0) +
+    (learningProgress.syllableCorrectAnswers ?? 0) +
+    (learningProgress.readingCorrectAnswers ?? 0) +
+    (learningProgress.numberCorrectAnswers ?? 0) +
+    (learningProgress.additionCorrectAnswers ?? 0) +
+    (learningProgress.subtractionCorrectAnswers ?? 0) +
+    (learningProgress.multiplicationCorrectAnswers ?? 0) +
+    (learningProgress.shapesColorsCorrectAnswers ?? 0) +
+    (learningProgress.memoryCorrectAnswers ?? 0);
+  const totalLearningAttempts =
+    (learningProgress.attempts ?? 0) +
+    (learningProgress.alphabetAttempts ?? 0) +
+    (learningProgress.syllableAttempts ?? 0) +
+    (learningProgress.readingAttempts ?? 0) +
+    (learningProgress.numberAttempts ?? 0) +
+    (learningProgress.additionAttempts ?? 0) +
+    (learningProgress.subtractionAttempts ?? 0) +
+    (learningProgress.multiplicationAttempts ?? 0) +
+    (learningProgress.shapesColorsAttempts ?? 0) +
+    (learningProgress.memoryAttempts ?? 0);
+  const latestLearningActivity = [
+    { label: 'Vocales', date: learningProgress.lastPracticeAt },
+    { label: 'Alfabeto', date: learningProgress.alphabetLastPracticeAt },
+    { label: 'Sílabas simples', date: learningProgress.syllableLastPracticeAt },
+    { label: 'Lectura inicial', date: learningProgress.readingLastPracticeAt },
+    { label: 'Números y conteo', date: learningProgress.numberLastPracticeAt },
+    { label: 'Sumas visuales', date: learningProgress.additionLastPracticeAt },
+    { label: 'Restas visuales', date: learningProgress.subtractionLastPracticeAt },
+    { label: 'Multiplicaciones visuales', date: learningProgress.multiplicationLastPracticeAt },
+    { label: 'Formas y colores', date: learningProgress.shapesColorsLastPracticeAt },
+    { label: 'Memoria y atención', date: learningProgress.memoryLastPracticeAt },
+  ]
+    .filter((item): item is { label: string; date: string } => Boolean(item.date))
+    .sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime())[0];
+  const learningSummary = [
+    { label: 'Actividades practicadas', value: activitiesPracticed },
+    { label: 'Última actividad realizada', value: latestLearningActivity?.label ?? 'Sin actividad registrada' },
+    { label: 'Vocales practicadas', value: learningProgress.vowelsSeen.length },
+    { label: 'Letras practicadas', value: learningProgress.lettersSeen?.length ?? 0 },
+    { label: 'Números practicados', value: learningProgress.numbersSeen?.length ?? 0 },
+    { label: 'Ejercicios de suma realizados', value: learningProgress.additionExercisesDone ?? 0 },
+    { label: 'Ejercicios de resta realizados', value: learningProgress.subtractionExercisesDone ?? 0 },
+    { label: 'Ejercicios de multiplicación realizados', value: learningProgress.multiplicationExercisesDone ?? 0 },
+    { label: 'Juegos de memoria realizados', value: learningProgress.memoryGamesDone ?? 0 },
+    { label: 'Aciertos totales', value: totalLearningCorrectAnswers },
+    { label: 'Intentos totales', value: totalLearningAttempts },
+  ];
+  const hasLearningData = learningSummary.some((item) => typeof item.value === 'number' && item.value > 0);
+  const resetLearningProgress = () => {
+    setStorageItem(LUMI_STORAGE_KEYS.learningProgress, defaultLearningProgress);
+    setLearningResetVersion((version) => version + 1);
+  };
 
   const summary = [
     { label: 'Rutinas completadas', value: routinesCompleted },
@@ -920,6 +1024,39 @@ const ProgressSummaryPage = () => {
         <h2 className="text-3xl font-bold text-slate-900">Resumen simple</h2>
         <p className="text-slate-500">Vista rápida del uso reciente en este dispositivo.</p>
       </div>
+
+      <section className="card-lumi bg-lumi-soft-green border-emerald-100 space-y-5">
+        <div className="flex flex-col lg:flex-row lg:items-start lg:justify-between gap-4">
+          <div>
+            <h3 className="text-2xl font-child font-bold text-emerald-800">Resumen de progreso educativo</h3>
+            <p className="text-slate-600 mt-1">Uso de actividades educativas guardado en este dispositivo.</p>
+          </div>
+          <button onClick={resetLearningProgress} className="btn-child bg-white border-emerald-200 text-emerald-700 px-5 py-3 text-base">
+            Reiniciar progreso educativo
+          </button>
+        </div>
+
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+          {learningSummary.map((item) => (
+            <div key={item.label} className="bg-white/90 border border-emerald-100 rounded-3xl p-4 text-center">
+              <p className="text-xs uppercase tracking-widest text-emerald-600 font-bold">{item.label}</p>
+              <p className="text-2xl font-bold text-slate-800 mt-2">{item.value}</p>
+            </div>
+          ))}
+        </div>
+
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
+          <p className="rounded-3xl bg-white/80 border border-emerald-100 p-4 text-emerald-800 font-semibold">Ha practicado varias actividades.</p>
+          <p className="rounded-3xl bg-white/80 border border-emerald-100 p-4 text-emerald-800 font-semibold">Sigue reforzando poco a poco.</p>
+          <p className="rounded-3xl bg-white/80 border border-emerald-100 p-4 text-emerald-800 font-semibold">Las rutinas cortas ayudan a mantener la práctica.</p>
+        </div>
+
+        {!hasLearningData && (
+          <p className="text-center text-slate-600 bg-white/70 border border-emerald-100 rounded-3xl px-4 py-3">
+            Aún no hay práctica educativa registrada. Cuando use Aprendizaje, aquí aparecerá el resumen.
+          </p>
+        )}
+      </section>
 
       {!hasData ? (
         <div className="card-lumi text-center py-10">
