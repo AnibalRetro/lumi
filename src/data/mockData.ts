@@ -273,7 +273,7 @@ export const learningCategories: LearningCategory[] = [
     icon: 'Brain',
     color: 'bg-rose-100 text-rose-700 border-rose-200',
     level: 'Nivel sugerido: Intermedio (5+)',
-    status: 'proximamente',
+    status: 'disponible',
     sectionId: 'memoria-atencion',
   },
 ];

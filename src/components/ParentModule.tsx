@@ -90,6 +90,8 @@ interface LearningProgress {
   numbersSeen?: number[];
   shapesSeen?: string[];
   colorsSeen?: string[];
+  memoryLevelUsed?: number;
+  memoryGamesDone?: number;
   additionExercisesDone?: number;
   subtractionExercisesDone?: number;
   multiplicationExercisesDone?: number;
@@ -104,6 +106,7 @@ interface LearningProgress {
   subtractionAttempts?: number;
   multiplicationAttempts?: number;
   shapesColorsAttempts?: number;
+  memoryAttempts?: number;
   alphabetCorrectAnswers?: number;
   syllableCorrectAnswers?: number;
   readingCorrectAnswers?: number;
@@ -112,6 +115,7 @@ interface LearningProgress {
   subtractionCorrectAnswers?: number;
   multiplicationCorrectAnswers?: number;
   shapesColorsCorrectAnswers?: number;
+  memoryCorrectAnswers?: number;
   alphabetLastPracticeAt?: string | null;
   syllableLastPracticeAt?: string | null;
   readingLastPracticeAt?: string | null;
@@ -120,6 +124,7 @@ interface LearningProgress {
   subtractionLastPracticeAt?: string | null;
   multiplicationLastPracticeAt?: string | null;
   shapesColorsLastPracticeAt?: string | null;
+  memoryLastPracticeAt?: string | null;
 }
 
 const defaultPlanExamples: PlanChange[] = [
@@ -901,6 +906,10 @@ const ProgressSummaryPage = () => {
     { label: 'Colores practicados', value: learningProgress.colorsSeen?.length ?? 0 },
     { label: 'Aciertos (formas y colores)', value: learningProgress.shapesColorsCorrectAnswers ?? 0 },
     { label: 'Intentos (formas y colores)', value: learningProgress.shapesColorsAttempts ?? 0 },
+    { label: 'Juegos de memoria realizados', value: learningProgress.memoryGamesDone ?? 0 },
+    { label: 'Aciertos (memoria)', value: learningProgress.memoryCorrectAnswers ?? 0 },
+    { label: 'Intentos (memoria)', value: learningProgress.memoryAttempts ?? 0 },
+    { label: 'Nivel usado (memoria)', value: learningProgress.memoryLevelUsed ?? 0 },
   ];
 
   const hasData = summary.some((item) => item.value > 0);

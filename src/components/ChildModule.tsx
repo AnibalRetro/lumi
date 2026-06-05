@@ -80,6 +80,8 @@ interface LearningProgress {
   numbersSeen?: number[];
   shapesSeen?: string[];
   colorsSeen?: string[];
+  memoryLevelUsed?: number;
+  memoryGamesDone?: number;
   additionExercisesDone?: number;
   subtractionExercisesDone?: number;
   multiplicationExercisesDone?: number;
@@ -92,6 +94,7 @@ interface LearningProgress {
   subtractionAttempts?: number;
   multiplicationAttempts?: number;
   shapesColorsAttempts?: number;
+  memoryAttempts?: number;
   correctAnswers: number;
   alphabetCorrectAnswers?: number;
   syllableCorrectAnswers?: number;
@@ -101,6 +104,7 @@ interface LearningProgress {
   subtractionCorrectAnswers?: number;
   multiplicationCorrectAnswers?: number;
   shapesColorsCorrectAnswers?: number;
+  memoryCorrectAnswers?: number;
   lastPracticeAt: string | null;
   alphabetLastPracticeAt?: string | null;
   syllableLastPracticeAt?: string | null;
@@ -110,6 +114,7 @@ interface LearningProgress {
   subtractionLastPracticeAt?: string | null;
   multiplicationLastPracticeAt?: string | null;
   shapesColorsLastPracticeAt?: string | null;
+  memoryLastPracticeAt?: string | null;
 }
 
 // --- Helpers ---
@@ -1388,6 +1393,54 @@ const colorCards = [
   { id: 'blanco', name: 'Blanco', hex: '#ffffff' },
 ];
 
+const memoryEmojiPool = ['🐶', '🐱', '🦁', '🐼', '🍎', '⭐', '🚗', '🌈'];
+const changeObjects = [
+  { name: 'perrito', emoji: '🐶' },
+  { name: 'gato', emoji: '🐱' },
+  { name: 'sol', emoji: '☀️' },
+  { name: 'flor', emoji: '🌸' },
+  { name: 'carro', emoji: '🚗' },
+  { name: 'estrella', emoji: '⭐' },
+];
+const sequenceActivities = [
+  {
+    id: 'manos',
+    title: 'Lavarse manos',
+    steps: [
+      { label: 'Abrir el agua', emoji: '🚰' },
+      { label: 'Usar jabón', emoji: '🧼' },
+      { label: 'Secar manos', emoji: '👐' },
+    ],
+  },
+  {
+    id: 'dientes',
+    title: 'Cepillarse dientes',
+    steps: [
+      { label: 'Poner pasta', emoji: '🪥' },
+      { label: 'Cepillar suave', emoji: '😁' },
+      { label: 'Enjuagar', emoji: '💧' },
+    ],
+  },
+  {
+    id: 'mochila',
+    title: 'Preparar mochila',
+    steps: [
+      { label: 'Guardar cuaderno', emoji: '📓' },
+      { label: 'Guardar colores', emoji: '🖍️' },
+      { label: 'Cerrar mochila', emoji: '🎒' },
+    ],
+  },
+  {
+    id: 'flor',
+    title: 'Plantar una flor',
+    steps: [
+      { label: 'Poner tierra', emoji: '🪴' },
+      { label: 'Poner semilla', emoji: '🌱' },
+      { label: 'Regar', emoji: '💧' },
+    ],
+  },
+];
+
 const LearningModule = () => {
   const [activeSection, setActiveSection] = useState<string | null>(null);
   const { speak } = useSpeech();
@@ -1561,6 +1614,18 @@ const LearningModule = () => {
     { shape: shapeCards[0], color: colorCards[0] },
     { shape: shapeCards[4], color: colorCards[3] },
   ]);
+
+  const [memoryGame, setMemoryGame] = useState<'pares' | 'cambio' | 'secuencia'>('pares');
+  const [memoryLevel, setMemoryLevel] = useState<4 | 6 | 8>(4);
+  const [pairCards, setPairCards] = useState(() => ['🐶', '🐶', '🐱', '🐱'].map((emoji, index) => ({ id: `${emoji}-${index}`, emoji, matched: false })));
+  const [selectedPairCards, setSelectedPairCards] = useState<number[]>([]);
+  const [changeBeforeObjects, setChangeBeforeObjects] = useState(changeObjects.slice(0, 3));
+  const [changeAfterObjects, setChangeAfterObjects] = useState([changeObjects[0], changeObjects[4], changeObjects[2]]);
+  const [changedObject, setChangedObject] = useState(changeObjects[4]);
+  const [changeOptions, setChangeOptions] = useState([changeObjects[4], changeObjects[1], changeObjects[3]]);
+  const [sequenceActivity, setSequenceActivity] = useState(sequenceActivities[0]);
+  const [sequenceOptions, setSequenceOptions] = useState(sequenceActivities[0].steps);
+  const [selectedSequenceSteps, setSelectedSequenceSteps] = useState<string[]>([]);
 
   const selectedCalendarMonthData = calendarMonthOptions.find((month) => month.name === selectedCalendarMonth) ?? calendarMonthOptions[0];
   const calendarMaxDay = selectedCalendarMonthData.maxDays;
@@ -2906,6 +2971,215 @@ const LearningModule = () => {
                   <button onClick={pickMultiplicationTable} className="btn-child bg-white border-amber-200 text-amber-700 px-6 py-4 text-xl w-full sm:w-auto mx-auto block">Ver otra tabla</button>
                 </div>
               )}
+            </div>
+          </div>
+        )}
+
+        {feedback && (
+          <div className="max-w-3xl mx-auto text-center bg-lumi-soft-yellow border border-amber-200 rounded-3xl px-6 py-4">
+            <p className="text-amber-800 font-bold text-2xl">{feedback}</p>
+          </div>
+        )}
+      </div>
+    );
+  }
+
+
+  if (activeSection === 'memoria-atencion') {
+    const updateMemoryProgress = (isCorrect: boolean, level = memoryLevel) => {
+      const current = getStorageItem<LearningProgress>(LUMI_STORAGE_KEYS.learningProgress, {
+        vowelsSeen: [],
+        attempts: 0,
+        correctAnswers: 0,
+        lastPracticeAt: null,
+      }) ?? {
+        vowelsSeen: [],
+        attempts: 0,
+        correctAnswers: 0,
+        lastPracticeAt: null,
+      };
+      setStorageItem(LUMI_STORAGE_KEYS.learningProgress, {
+        ...current,
+        memoryGamesDone: (current.memoryGamesDone ?? 0) + 1,
+        memoryAttempts: (current.memoryAttempts ?? 0) + 1,
+        memoryCorrectAnswers: (current.memoryCorrectAnswers ?? 0) + (isCorrect ? 1 : 0),
+        memoryLevelUsed: level,
+        memoryLastPracticeAt: new Date().toISOString(),
+      });
+    };
+
+    const startPairGame = (level: 4 | 6 | 8 = memoryLevel) => {
+      const pairCount = level / 2;
+      const cards = memoryEmojiPool
+        .slice(0, pairCount)
+        .flatMap((emoji) => [emoji, emoji])
+        .sort(() => Math.random() - 0.5)
+        .map((emoji, index) => ({ id: `${emoji}-${index}-${Date.now()}`, emoji, matched: false }));
+      setMemoryLevel(level);
+      setPairCards(cards);
+      setSelectedPairCards([]);
+      setFeedback('Vamos paso a paso');
+    };
+
+    const pickChangeChallenge = () => {
+      const before = changeObjects.sort(() => Math.random() - 0.5).slice(0, 3);
+      const changedIndex = Math.floor(Math.random() * before.length);
+      const replacement = changeObjects.find((item) => !before.some((beforeItem) => beforeItem.name === item.name)) ?? changeObjects[0];
+      const after = before.map((item, index) => index === changedIndex ? replacement : item);
+      const options = [replacement, ...before.filter((_, index) => index !== changedIndex).slice(0, 2)].sort(() => Math.random() - 0.5);
+      setChangeBeforeObjects(before);
+      setChangeAfterObjects(after);
+      setChangedObject(replacement);
+      setChangeOptions(options);
+    };
+
+    const pickSequenceChallenge = () => {
+      const nextActivity = sequenceActivities[Math.floor(Math.random() * sequenceActivities.length)];
+      setSequenceActivity(nextActivity);
+      setSequenceOptions([...nextActivity.steps].sort(() => Math.random() - 0.5));
+      setSelectedSequenceSteps([]);
+      setFeedback('Vamos paso a paso');
+    };
+
+    const handlePairCard = (cardIndex: number) => {
+      if (pairCards[cardIndex].matched || selectedPairCards.includes(cardIndex) || selectedPairCards.length === 2) return;
+      const nextSelected = [...selectedPairCards, cardIndex];
+      setSelectedPairCards(nextSelected);
+      speak(pairCards[cardIndex].emoji);
+      if (nextSelected.length === 2) {
+        const isMatch = pairCards[nextSelected[0]].emoji === pairCards[nextSelected[1]].emoji;
+        if (isMatch) {
+          setFeedback('Lo lograste');
+          playFeedbackTone(true);
+          updateMemoryProgress(true);
+          setPairCards((cards) => cards.map((card, index) => nextSelected.includes(index) ? { ...card, matched: true } : card));
+          window.setTimeout(() => setSelectedPairCards([]), 700);
+        } else {
+          setFeedback('Buen intento, miremos otra vez');
+          playFeedbackTone(false);
+          updateMemoryProgress(false);
+          window.setTimeout(() => setSelectedPairCards([]), 900);
+        }
+      }
+    };
+
+    const handleChangeAnswer = (selected: typeof changeObjects[number]) => {
+      speak(selected.name);
+      if (selected.name === changedObject.name) {
+        setFeedback('Lo lograste');
+        playFeedbackTone(true);
+        updateMemoryProgress(true, 3);
+      } else {
+        setFeedback('Buen intento, miremos otra vez');
+        playFeedbackTone(false);
+        updateMemoryProgress(false, 3);
+      }
+      window.setTimeout(pickChangeChallenge, 1200);
+    };
+
+    const handleSequenceStep = (stepLabel: string) => {
+      if (selectedSequenceSteps.includes(stepLabel)) return;
+      const expectedStep = sequenceActivity.steps[selectedSequenceSteps.length];
+      if (stepLabel === expectedStep.label) {
+        const nextSteps = [...selectedSequenceSteps, stepLabel];
+        setSelectedSequenceSteps(nextSteps);
+        speak(stepLabel);
+        if (nextSteps.length === sequenceActivity.steps.length) {
+          setFeedback('Lo lograste');
+          playFeedbackTone(true);
+          updateMemoryProgress(true, sequenceActivity.steps.length);
+          window.setTimeout(pickSequenceChallenge, 1300);
+        } else {
+          setFeedback('Vamos paso a paso');
+        }
+      } else {
+        setFeedback('Buen intento, miremos otra vez');
+        playFeedbackTone(false);
+        updateMemoryProgress(false, sequenceActivity.steps.length);
+        window.setTimeout(() => setSelectedSequenceSteps([]), 1000);
+      }
+    };
+
+    return (
+      <div className="space-y-8">
+        <div className="text-center max-w-3xl mx-auto">
+          <h3 className="text-4xl font-child font-bold">Memoria y atención</h3>
+          <p className="text-slate-500 mt-2">Jugamos con pares, cambios y secuencias paso a paso</p>
+        </div>
+
+        <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 max-w-5xl mx-auto">
+          <button onClick={() => { setMemoryGame('pares'); startPairGame(memoryLevel); }} className={cn('btn-child py-4 text-xl', memoryGame === 'pares' ? 'bg-purple-100 border-purple-300 text-purple-700' : 'bg-white border-slate-100')}>Encuentra el par</button>
+          <button onClick={() => { setMemoryGame('cambio'); pickChangeChallenge(); }} className={cn('btn-child py-4 text-xl', memoryGame === 'cambio' ? 'bg-purple-100 border-purple-300 text-purple-700' : 'bg-white border-slate-100')}>¿Qué cambió?</button>
+          <button onClick={() => { setMemoryGame('secuencia'); pickSequenceChallenge(); }} className={cn('btn-child py-4 text-xl', memoryGame === 'secuencia' ? 'bg-purple-100 border-purple-300 text-purple-700' : 'bg-white border-slate-100')}>Ordena la secuencia</button>
+        </div>
+
+        {memoryGame === 'pares' && (
+          <div className="max-w-5xl mx-auto space-y-5">
+            <div className="flex flex-wrap justify-center gap-3">
+              {[4, 6, 8].map((level) => (
+                <button key={level} onClick={() => startPairGame(level as 4 | 6 | 8)} className={cn('btn-child px-5 py-3', memoryLevel === level ? 'bg-purple-100 border-purple-300 text-purple-700' : 'bg-white border-slate-100')}>{level} cartas</button>
+              ))}
+            </div>
+            <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
+              {pairCards.map((card, index) => {
+                const isOpen = card.matched || selectedPairCards.includes(index);
+                return (
+                  <button key={card.id} onClick={() => handlePairCard(index)} className={cn('btn-child min-h-32 text-6xl bg-white border-purple-100', isOpen ? 'bg-purple-50' : 'bg-purple-100 text-purple-500')}>
+                    {isOpen ? card.emoji : '❔'}
+                  </button>
+                );
+              })}
+            </div>
+          </div>
+        )}
+
+        {memoryGame === 'cambio' && (
+          <div className="max-w-5xl mx-auto space-y-6">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+              <div className="card-lumi bg-purple-50 border-purple-100 text-center space-y-3">
+                <p className="font-bold text-purple-800">Primero</p>
+                <p className="text-6xl" aria-hidden="true">{changeBeforeObjects.map((item) => item.emoji).join(' ')}</p>
+              </div>
+              <div className="card-lumi bg-purple-50 border-purple-100 text-center space-y-3">
+                <p className="font-bold text-purple-800">Después</p>
+                <p className="text-6xl" aria-hidden="true">{changeAfterObjects.map((item) => item.emoji).join(' ')}</p>
+              </div>
+            </div>
+            <div className="card-lumi bg-white border-purple-100 text-center">
+              <p className="text-3xl font-child font-bold text-purple-800">¿Qué cambió?</p>
+            </div>
+            <div className="grid grid-cols-3 gap-4">
+              {changeOptions.map((item) => (
+                <button key={item.name} onClick={() => handleChangeAnswer(item)} className="btn-child bg-white border-purple-100 py-8 text-center space-y-2">
+                  <p className="text-6xl" aria-hidden="true">{item.emoji}</p>
+                  <p className="text-lg font-bold text-slate-700">{item.name}</p>
+                </button>
+              ))}
+            </div>
+          </div>
+        )}
+
+        {memoryGame === 'secuencia' && (
+          <div className="max-w-5xl mx-auto space-y-6">
+            <div className="card-lumi bg-purple-50 border-purple-100 text-center space-y-2">
+              <p className="text-3xl font-child font-bold text-purple-800">{sequenceActivity.title}</p>
+              <p className="text-slate-600">Toca en orden: primero, después y al final.</p>
+            </div>
+            <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+              {sequenceOptions.map((step) => (
+                <button key={step.label} onClick={() => handleSequenceStep(step.label)} className={cn('btn-child bg-white border-purple-100 py-8 text-center space-y-3', selectedSequenceSteps.includes(step.label) && 'bg-purple-50 border-purple-300')}>
+                  <p className="text-6xl" aria-hidden="true">{step.emoji}</p>
+                  <p className="text-xl font-bold text-slate-700">{step.label}</p>
+                </button>
+              ))}
+            </div>
+            <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 text-center">
+              {['Primero', 'Después', 'Al final'].map((label, index) => (
+                <div key={label} className="rounded-3xl bg-white border border-purple-100 p-4">
+                  <p className="text-sm font-bold text-purple-700 uppercase">{label}</p>
+                  <p className="text-slate-700 font-semibold mt-1">{selectedSequenceSteps[index] ?? '...'}</p>
+                </div>
+              ))}
             </div>
           </div>
         )}
