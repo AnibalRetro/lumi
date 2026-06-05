@@ -80,6 +80,7 @@ interface LearningProgress {
   numbersSeen?: number[];
   additionExercisesDone?: number;
   subtractionExercisesDone?: number;
+  multiplicationExercisesDone?: number;
   attempts: number;
   alphabetAttempts?: number;
   syllableAttempts?: number;
@@ -87,6 +88,7 @@ interface LearningProgress {
   numberAttempts?: number;
   additionAttempts?: number;
   subtractionAttempts?: number;
+  multiplicationAttempts?: number;
   correctAnswers: number;
   alphabetCorrectAnswers?: number;
   syllableCorrectAnswers?: number;
@@ -94,6 +96,7 @@ interface LearningProgress {
   numberCorrectAnswers?: number;
   additionCorrectAnswers?: number;
   subtractionCorrectAnswers?: number;
+  multiplicationCorrectAnswers?: number;
   lastPracticeAt: string | null;
   alphabetLastPracticeAt?: string | null;
   syllableLastPracticeAt?: string | null;
@@ -101,6 +104,7 @@ interface LearningProgress {
   numberLastPracticeAt?: string | null;
   additionLastPracticeAt?: string | null;
   subtractionLastPracticeAt?: string | null;
+  multiplicationLastPracticeAt?: string | null;
 }
 
 // --- Helpers ---
@@ -1460,7 +1464,7 @@ const LearningModule = () => {
       text: `${value} ${value === 1 ? 'manzana' : 'manzanas'}`,
     };
   });
-  const [numberActivity, setNumberActivity] = useState<'conteo' | 'sumas' | 'restas'>('conteo');
+  const [numberActivity, setNumberActivity] = useState<'conteo' | 'sumas' | 'restas' | 'multiplicaciones'>('conteo');
   const [numberMode, setNumberMode] = useState<'conoce' | 'cuenta' | 'toca'>('conoce');
   const [countChallenge, setCountChallenge] = useState(numberCards[2]);
   const [countOptions, setCountOptions] = useState<number[]>([2, 3, 4]);
@@ -1474,6 +1478,10 @@ const LearningModule = () => {
   const [subtractionChallenge, setSubtractionChallenge] = useState({ total: 3, takeAway: 1 });
   const [subtractionOptions, setSubtractionOptions] = useState<number[]>([1, 2, 3]);
   const [subtractionEquation, setSubtractionEquation] = useState<string | null>(null);
+  const [multiplicationMode, setMultiplicationMode] = useState<'grupos' | 'cuenta' | 'tabla'>('grupos');
+  const [multiplicationChallenge, setMultiplicationChallenge] = useState({ groups: 3, perGroup: 2 });
+  const [multiplicationOptions, setMultiplicationOptions] = useState<number[]>([5, 6, 7]);
+  const [multiplicationTable, setMultiplicationTable] = useState(2);
 
   useEffect(() => {
     if (!feedback) return;
@@ -1507,6 +1515,7 @@ const LearningModule = () => {
         numbersSeen: current.numbersSeen ?? [],
         additionExercisesDone: current.additionExercisesDone ?? 0,
         subtractionExercisesDone: current.subtractionExercisesDone ?? 0,
+        multiplicationExercisesDone: current.multiplicationExercisesDone ?? 0,
         attempts: current.attempts + 1,
         alphabetAttempts: current.alphabetAttempts ?? 0,
         syllableAttempts: current.syllableAttempts ?? 0,
@@ -1514,6 +1523,7 @@ const LearningModule = () => {
         numberAttempts: current.numberAttempts ?? 0,
         additionAttempts: current.additionAttempts ?? 0,
         subtractionAttempts: current.subtractionAttempts ?? 0,
+        multiplicationAttempts: current.multiplicationAttempts ?? 0,
         correctAnswers: current.correctAnswers + (isCorrect ? 1 : 0),
         alphabetCorrectAnswers: current.alphabetCorrectAnswers ?? 0,
         syllableCorrectAnswers: current.syllableCorrectAnswers ?? 0,
@@ -1521,6 +1531,7 @@ const LearningModule = () => {
         numberCorrectAnswers: current.numberCorrectAnswers ?? 0,
         additionCorrectAnswers: current.additionCorrectAnswers ?? 0,
         subtractionCorrectAnswers: current.subtractionCorrectAnswers ?? 0,
+        multiplicationCorrectAnswers: current.multiplicationCorrectAnswers ?? 0,
         lastPracticeAt: new Date().toISOString(),
         alphabetLastPracticeAt: current.alphabetLastPracticeAt ?? null,
         syllableLastPracticeAt: current.syllableLastPracticeAt ?? null,
@@ -1528,6 +1539,7 @@ const LearningModule = () => {
         numberLastPracticeAt: current.numberLastPracticeAt ?? null,
         additionLastPracticeAt: current.additionLastPracticeAt ?? null,
         subtractionLastPracticeAt: current.subtractionLastPracticeAt ?? null,
+        multiplicationLastPracticeAt: current.multiplicationLastPracticeAt ?? null,
       };
       setStorageItem(LUMI_STORAGE_KEYS.learningProgress, nextProgress);
     };
@@ -2091,6 +2103,7 @@ const LearningModule = () => {
         numbersSeen: [],
         additionExercisesDone: 0,
         subtractionExercisesDone: 0,
+        multiplicationExercisesDone: 0,
         attempts: 0,
         alphabetAttempts: 0,
         syllableAttempts: 0,
@@ -2098,6 +2111,7 @@ const LearningModule = () => {
         numberAttempts: 0,
         additionAttempts: 0,
         subtractionAttempts: 0,
+        multiplicationAttempts: 0,
         correctAnswers: 0,
         alphabetCorrectAnswers: 0,
         syllableCorrectAnswers: 0,
@@ -2105,6 +2119,7 @@ const LearningModule = () => {
         numberCorrectAnswers: 0,
         additionCorrectAnswers: 0,
         subtractionCorrectAnswers: 0,
+        multiplicationCorrectAnswers: 0,
         lastPracticeAt: null,
         alphabetLastPracticeAt: null,
         syllableLastPracticeAt: null,
@@ -2112,6 +2127,7 @@ const LearningModule = () => {
         numberLastPracticeAt: null,
         additionLastPracticeAt: null,
         subtractionLastPracticeAt: null,
+        multiplicationLastPracticeAt: null,
       }) ?? {
         vowelsSeen: [],
         lettersSeen: [],
@@ -2121,6 +2137,7 @@ const LearningModule = () => {
         numbersSeen: [],
         additionExercisesDone: 0,
         subtractionExercisesDone: 0,
+        multiplicationExercisesDone: 0,
         attempts: 0,
         alphabetAttempts: 0,
         syllableAttempts: 0,
@@ -2128,6 +2145,7 @@ const LearningModule = () => {
         numberAttempts: 0,
         additionAttempts: 0,
         subtractionAttempts: 0,
+        multiplicationAttempts: 0,
         correctAnswers: 0,
         alphabetCorrectAnswers: 0,
         syllableCorrectAnswers: 0,
@@ -2135,6 +2153,7 @@ const LearningModule = () => {
         numberCorrectAnswers: 0,
         additionCorrectAnswers: 0,
         subtractionCorrectAnswers: 0,
+        multiplicationCorrectAnswers: 0,
         lastPracticeAt: null,
         alphabetLastPracticeAt: null,
         syllableLastPracticeAt: null,
@@ -2142,6 +2161,7 @@ const LearningModule = () => {
         numberLastPracticeAt: null,
         additionLastPracticeAt: null,
         subtractionLastPracticeAt: null,
+        multiplicationLastPracticeAt: null,
       };
       const currentNumbers = current.numbersSeen ?? [];
       setStorageItem(LUMI_STORAGE_KEYS.learningProgress, {
@@ -2163,6 +2183,7 @@ const LearningModule = () => {
         numbersSeen: [],
         additionExercisesDone: 0,
         subtractionExercisesDone: 0,
+        multiplicationExercisesDone: 0,
         attempts: 0,
         alphabetAttempts: 0,
         syllableAttempts: 0,
@@ -2170,6 +2191,7 @@ const LearningModule = () => {
         numberAttempts: 0,
         additionAttempts: 0,
         subtractionAttempts: 0,
+        multiplicationAttempts: 0,
         correctAnswers: 0,
         alphabetCorrectAnswers: 0,
         syllableCorrectAnswers: 0,
@@ -2177,6 +2199,7 @@ const LearningModule = () => {
         numberCorrectAnswers: 0,
         additionCorrectAnswers: 0,
         subtractionCorrectAnswers: 0,
+        multiplicationCorrectAnswers: 0,
         lastPracticeAt: null,
         alphabetLastPracticeAt: null,
         syllableLastPracticeAt: null,
@@ -2184,6 +2207,7 @@ const LearningModule = () => {
         numberLastPracticeAt: null,
         additionLastPracticeAt: null,
         subtractionLastPracticeAt: null,
+        multiplicationLastPracticeAt: null,
       }) ?? {
         vowelsSeen: [],
         lettersSeen: [],
@@ -2193,6 +2217,7 @@ const LearningModule = () => {
         numbersSeen: [],
         additionExercisesDone: 0,
         subtractionExercisesDone: 0,
+        multiplicationExercisesDone: 0,
         attempts: 0,
         alphabetAttempts: 0,
         syllableAttempts: 0,
@@ -2200,6 +2225,7 @@ const LearningModule = () => {
         numberAttempts: 0,
         additionAttempts: 0,
         subtractionAttempts: 0,
+        multiplicationAttempts: 0,
         correctAnswers: 0,
         alphabetCorrectAnswers: 0,
         syllableCorrectAnswers: 0,
@@ -2207,6 +2233,7 @@ const LearningModule = () => {
         numberCorrectAnswers: 0,
         additionCorrectAnswers: 0,
         subtractionCorrectAnswers: 0,
+        multiplicationCorrectAnswers: 0,
         lastPracticeAt: null,
         alphabetLastPracticeAt: null,
         syllableLastPracticeAt: null,
@@ -2214,6 +2241,7 @@ const LearningModule = () => {
         numberLastPracticeAt: null,
         additionLastPracticeAt: null,
         subtractionLastPracticeAt: null,
+        multiplicationLastPracticeAt: null,
       };
       setStorageItem(LUMI_STORAGE_KEYS.learningProgress, {
         ...current,
@@ -2268,6 +2296,7 @@ const LearningModule = () => {
         numbersSeen: [],
         additionExercisesDone: 0,
         subtractionExercisesDone: 0,
+        multiplicationExercisesDone: 0,
         attempts: 0,
         alphabetAttempts: 0,
         syllableAttempts: 0,
@@ -2275,6 +2304,7 @@ const LearningModule = () => {
         numberAttempts: 0,
         additionAttempts: 0,
         subtractionAttempts: 0,
+        multiplicationAttempts: 0,
         correctAnswers: 0,
         alphabetCorrectAnswers: 0,
         syllableCorrectAnswers: 0,
@@ -2282,6 +2312,7 @@ const LearningModule = () => {
         numberCorrectAnswers: 0,
         additionCorrectAnswers: 0,
         subtractionCorrectAnswers: 0,
+        multiplicationCorrectAnswers: 0,
         lastPracticeAt: null,
         alphabetLastPracticeAt: null,
         syllableLastPracticeAt: null,
@@ -2289,6 +2320,7 @@ const LearningModule = () => {
         numberLastPracticeAt: null,
         additionLastPracticeAt: null,
         subtractionLastPracticeAt: null,
+        multiplicationLastPracticeAt: null,
       }) ?? {
         vowelsSeen: [],
         lettersSeen: [],
@@ -2298,6 +2330,7 @@ const LearningModule = () => {
         numbersSeen: [],
         additionExercisesDone: 0,
         subtractionExercisesDone: 0,
+        multiplicationExercisesDone: 0,
         attempts: 0,
         alphabetAttempts: 0,
         syllableAttempts: 0,
@@ -2305,6 +2338,7 @@ const LearningModule = () => {
         numberAttempts: 0,
         additionAttempts: 0,
         subtractionAttempts: 0,
+        multiplicationAttempts: 0,
         correctAnswers: 0,
         alphabetCorrectAnswers: 0,
         syllableCorrectAnswers: 0,
@@ -2312,6 +2346,7 @@ const LearningModule = () => {
         numberCorrectAnswers: 0,
         additionCorrectAnswers: 0,
         subtractionCorrectAnswers: 0,
+        multiplicationCorrectAnswers: 0,
         lastPracticeAt: null,
         alphabetLastPracticeAt: null,
         syllableLastPracticeAt: null,
@@ -2319,6 +2354,7 @@ const LearningModule = () => {
         numberLastPracticeAt: null,
         additionLastPracticeAt: null,
         subtractionLastPracticeAt: null,
+        multiplicationLastPracticeAt: null,
       };
       setStorageItem(LUMI_STORAGE_KEYS.learningProgress, {
         ...current,
@@ -2361,6 +2397,122 @@ const LearningModule = () => {
         updateSubtractionProgress(false);
       }
       window.setTimeout(pickSubtractionChallenge, 1300);
+    };
+
+    const updateMultiplicationProgress = (isCorrect: boolean) => {
+      const current = getStorageItem<LearningProgress>(LUMI_STORAGE_KEYS.learningProgress, {
+        vowelsSeen: [],
+        lettersSeen: [],
+        syllablesSeen: [],
+        readingWordsSeen: [],
+        readingPhrasesSeen: [],
+        numbersSeen: [],
+        additionExercisesDone: 0,
+        subtractionExercisesDone: 0,
+        multiplicationExercisesDone: 0,
+        attempts: 0,
+        alphabetAttempts: 0,
+        syllableAttempts: 0,
+        readingAttempts: 0,
+        numberAttempts: 0,
+        additionAttempts: 0,
+        subtractionAttempts: 0,
+        multiplicationAttempts: 0,
+        correctAnswers: 0,
+        alphabetCorrectAnswers: 0,
+        syllableCorrectAnswers: 0,
+        readingCorrectAnswers: 0,
+        numberCorrectAnswers: 0,
+        additionCorrectAnswers: 0,
+        subtractionCorrectAnswers: 0,
+        multiplicationCorrectAnswers: 0,
+        lastPracticeAt: null,
+        alphabetLastPracticeAt: null,
+        syllableLastPracticeAt: null,
+        readingLastPracticeAt: null,
+        numberLastPracticeAt: null,
+        additionLastPracticeAt: null,
+        subtractionLastPracticeAt: null,
+        multiplicationLastPracticeAt: null,
+      }) ?? {
+        vowelsSeen: [],
+        lettersSeen: [],
+        syllablesSeen: [],
+        readingWordsSeen: [],
+        readingPhrasesSeen: [],
+        numbersSeen: [],
+        additionExercisesDone: 0,
+        subtractionExercisesDone: 0,
+        multiplicationExercisesDone: 0,
+        attempts: 0,
+        alphabetAttempts: 0,
+        syllableAttempts: 0,
+        readingAttempts: 0,
+        numberAttempts: 0,
+        additionAttempts: 0,
+        subtractionAttempts: 0,
+        multiplicationAttempts: 0,
+        correctAnswers: 0,
+        alphabetCorrectAnswers: 0,
+        syllableCorrectAnswers: 0,
+        readingCorrectAnswers: 0,
+        numberCorrectAnswers: 0,
+        additionCorrectAnswers: 0,
+        subtractionCorrectAnswers: 0,
+        multiplicationCorrectAnswers: 0,
+        lastPracticeAt: null,
+        alphabetLastPracticeAt: null,
+        syllableLastPracticeAt: null,
+        readingLastPracticeAt: null,
+        numberLastPracticeAt: null,
+        additionLastPracticeAt: null,
+        subtractionLastPracticeAt: null,
+        multiplicationLastPracticeAt: null,
+      };
+      setStorageItem(LUMI_STORAGE_KEYS.learningProgress, {
+        ...current,
+        multiplicationExercisesDone: (current.multiplicationExercisesDone ?? 0) + 1,
+        multiplicationAttempts: (current.multiplicationAttempts ?? 0) + 1,
+        multiplicationCorrectAnswers: (current.multiplicationCorrectAnswers ?? 0) + (isCorrect ? 1 : 0),
+        multiplicationLastPracticeAt: new Date().toISOString(),
+      });
+    };
+
+    const makeMultiplicationOptions = (answer: number) => {
+      const options = [answer];
+      [answer - 1, answer + 1, answer - 2, answer + 2, answer + 3, answer - 3].forEach((value) => {
+        if (value >= 1 && value <= 25 && options.length < 3 && !options.includes(value)) options.push(value);
+      });
+      return options.sort((a, b) => a - b);
+    };
+
+    const pickMultiplicationChallenge = () => {
+      const groups = Math.floor(Math.random() * 4) + 2;
+      const perGroup = Math.floor(Math.random() * 4) + 1;
+      const answer = groups * perGroup;
+      setMultiplicationChallenge({ groups, perGroup });
+      setMultiplicationOptions(makeMultiplicationOptions(answer));
+    };
+
+    const pickMultiplicationTable = () => {
+      const tables = [2, 3, 4, 5];
+      setMultiplicationTable(tables[Math.floor(Math.random() * tables.length)]);
+    };
+
+    const handleMultiplicationAnswer = (selected: number) => {
+      const answer = multiplicationChallenge.groups * multiplicationChallenge.perGroup;
+      if (selected === answer) {
+        setFeedback('Lo lograste');
+        speak(String(selected));
+        playFeedbackTone(true);
+        updateMultiplicationProgress(true);
+      } else {
+        setFeedback('Buen intento, contemos los grupos otra vez');
+        speak(String(selected));
+        playFeedbackTone(false);
+        updateMultiplicationProgress(false);
+      }
+      window.setTimeout(pickMultiplicationChallenge, 1300);
     };
 
     const pickCountChallenge = () => {
@@ -2422,10 +2574,11 @@ const LearningModule = () => {
           <p className="text-slate-500 mt-2">Aprendamos números, cantidades y conteo</p>
         </div>
 
-        <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 max-w-4xl mx-auto">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 max-w-6xl mx-auto">
           <button onClick={() => setNumberActivity('conteo')} className={cn('btn-child py-4 text-xl', numberActivity === 'conteo' ? 'bg-orange-100 border-orange-300 text-orange-700' : 'bg-white border-slate-100')}>Números y conteo</button>
           <button onClick={() => { setNumberActivity('sumas'); pickAdditionChallenge(); }} className={cn('btn-child py-4 text-xl', numberActivity === 'sumas' ? 'bg-orange-100 border-orange-300 text-orange-700' : 'bg-white border-slate-100')}>Sumas visuales</button>
           <button onClick={() => { setNumberActivity('restas'); pickSubtractionChallenge(); }} className={cn('btn-child py-4 text-xl', numberActivity === 'restas' ? 'bg-orange-100 border-orange-300 text-orange-700' : 'bg-white border-slate-100')}>Restas visuales</button>
+          <button onClick={() => { setNumberActivity('multiplicaciones'); pickMultiplicationChallenge(); }} className={cn('btn-child py-4 text-xl', numberActivity === 'multiplicaciones' ? 'bg-orange-100 border-orange-300 text-orange-700' : 'bg-white border-slate-100')}>Multiplicaciones visuales</button>
         </div>
 
         {numberActivity === 'conteo' && (
@@ -2535,6 +2688,82 @@ const LearningModule = () => {
               <div className="grid grid-cols-3 gap-4">
                 {subtractionOptions.map((option) => <button key={option} onClick={() => handleSubtractionAnswer(option)} className="btn-child py-8 text-5xl font-black bg-white border-amber-100 text-amber-600">{option}</button>)}
               </div>
+            </div>
+          </div>
+        )}
+
+
+        {numberActivity === 'multiplicaciones' && (
+          <div className="space-y-6">
+            <div className="text-center">
+              <h4 className="text-3xl font-child font-bold">Multiplicaciones visuales</h4>
+              <p className="text-slate-500">Contamos grupos repetidos con objetos simples</p>
+            </div>
+            <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 max-w-4xl mx-auto">
+              <button onClick={() => { setMultiplicationMode('grupos'); pickMultiplicationChallenge(); }} className={cn('btn-child py-4 text-xl', multiplicationMode === 'grupos' ? 'bg-amber-100 border-amber-300 text-amber-700' : 'bg-white border-slate-100')}>Grupos de objetos</button>
+              <button onClick={() => { setMultiplicationMode('cuenta'); pickMultiplicationChallenge(); }} className={cn('btn-child py-4 text-xl', multiplicationMode === 'cuenta' ? 'bg-amber-100 border-amber-300 text-amber-700' : 'bg-white border-slate-100')}>Cuenta los grupos</button>
+              <button onClick={() => { setMultiplicationMode('tabla'); pickMultiplicationTable(); }} className={cn('btn-child py-4 text-xl', multiplicationMode === 'tabla' ? 'bg-amber-100 border-amber-300 text-amber-700' : 'bg-white border-slate-100')}>Tabla visual</button>
+            </div>
+
+            <div className="max-w-4xl mx-auto space-y-6">
+              {multiplicationMode === 'grupos' && (
+                <div className="card-lumi text-center bg-amber-50 border-amber-100 space-y-4">
+                  <p className="text-3xl font-child font-bold text-amber-800">{multiplicationChallenge.groups} grupos de {multiplicationChallenge.perGroup} manzanas</p>
+                  <div className="flex flex-wrap justify-center gap-4" aria-hidden="true">
+                    {Array.from({ length: multiplicationChallenge.groups }, (_, groupIndex) => (
+                      <span key={groupIndex} className="text-4xl bg-white rounded-3xl px-4 py-3 border border-amber-100 shadow-soft">
+                        {Array.from({ length: multiplicationChallenge.perGroup }, () => '🍎').join(' ')}
+                      </span>
+                    ))}
+                  </div>
+                  <p className="text-4xl font-black text-amber-700">{multiplicationChallenge.groups} x {multiplicationChallenge.perGroup} = {multiplicationChallenge.groups * multiplicationChallenge.perGroup}</p>
+                  <button onClick={() => { speak(`${multiplicationChallenge.groups} por ${multiplicationChallenge.perGroup} es ${multiplicationChallenge.groups * multiplicationChallenge.perGroup}`); playFeedbackTone(true); updateMultiplicationProgress(true); setFeedback('Lo lograste'); }} className="btn-child bg-white border-amber-200 text-amber-700 px-6 py-4 text-xl">Practiqué este grupo</button>
+                </div>
+              )}
+
+              {multiplicationMode === 'cuenta' && (
+                <>
+                  <div className="card-lumi text-center bg-amber-50 border-amber-100 space-y-4">
+                    <p className="text-3xl font-child font-bold text-amber-800">Hay {multiplicationChallenge.groups} grupos de {multiplicationChallenge.perGroup}. ¿Cuántos objetos hay?</p>
+                    <div className="flex flex-wrap justify-center gap-4" aria-hidden="true">
+                      {Array.from({ length: multiplicationChallenge.groups }, (_, groupIndex) => (
+                        <span key={groupIndex} className="text-4xl bg-white rounded-3xl px-4 py-3 border border-amber-100 shadow-soft">
+                          {Array.from({ length: multiplicationChallenge.perGroup }, () => '🍎').join(' ')}
+                        </span>
+                      ))}
+                    </div>
+                  </div>
+                  <div className="grid grid-cols-3 gap-4">
+                    {multiplicationOptions.map((option) => <button key={option} onClick={() => handleMultiplicationAnswer(option)} className="btn-child py-8 text-5xl font-black bg-white border-amber-100 text-amber-600">{option}</button>)}
+                  </div>
+                </>
+              )}
+
+              {multiplicationMode === 'tabla' && (
+                <div className="card-lumi bg-amber-50 border-amber-100 space-y-4">
+                  <div className="text-center">
+                    <p className="text-3xl font-child font-bold text-amber-800">Tabla visual del {multiplicationTable}</p>
+                    <p className="text-slate-600">Miramos solo los primeros grupos para mantenerlo simple.</p>
+                  </div>
+                  <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+                    {[1, 2, 3].map((value) => (
+                      <button
+                        key={value}
+                        onClick={() => { speak(`${multiplicationTable} por ${value} es ${multiplicationTable * value}`); playFeedbackTone(true); updateMultiplicationProgress(true); setFeedback('Lo lograste'); }}
+                        className="bg-white rounded-3xl p-4 border border-amber-100 text-center space-y-3 hover:bg-amber-50 transition-colors"
+                      >
+                        <p className="text-3xl font-black text-amber-700">{multiplicationTable} x {value} = {multiplicationTable * value}</p>
+                        <div className="flex flex-wrap justify-center gap-2" aria-hidden="true">
+                          {Array.from({ length: value }, (_, groupIndex) => (
+                            <span key={groupIndex} className="text-2xl bg-amber-50 rounded-2xl px-3 py-2">{Array.from({ length: multiplicationTable }, () => '🍎').join(' ')}</span>
+                          ))}
+                        </div>
+                      </button>
+                    ))}
+                  </div>
+                  <button onClick={pickMultiplicationTable} className="btn-child bg-white border-amber-200 text-amber-700 px-6 py-4 text-xl w-full sm:w-auto mx-auto block">Ver otra tabla</button>
+                </div>
+              )}
             </div>
           </div>
         )}

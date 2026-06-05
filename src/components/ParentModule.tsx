@@ -90,6 +90,7 @@ interface LearningProgress {
   numbersSeen?: number[];
   additionExercisesDone?: number;
   subtractionExercisesDone?: number;
+  multiplicationExercisesDone?: number;
   attempts: number;
   correctAnswers: number;
   lastPracticeAt: string | null;
@@ -99,18 +100,21 @@ interface LearningProgress {
   numberAttempts?: number;
   additionAttempts?: number;
   subtractionAttempts?: number;
+  multiplicationAttempts?: number;
   alphabetCorrectAnswers?: number;
   syllableCorrectAnswers?: number;
   readingCorrectAnswers?: number;
   numberCorrectAnswers?: number;
   additionCorrectAnswers?: number;
   subtractionCorrectAnswers?: number;
+  multiplicationCorrectAnswers?: number;
   alphabetLastPracticeAt?: string | null;
   syllableLastPracticeAt?: string | null;
   readingLastPracticeAt?: string | null;
   numberLastPracticeAt?: string | null;
   additionLastPracticeAt?: string | null;
   subtractionLastPracticeAt?: string | null;
+  multiplicationLastPracticeAt?: string | null;
 }
 
 const defaultPlanExamples: PlanChange[] = [
@@ -885,6 +889,9 @@ const ProgressSummaryPage = () => {
     { label: 'Restas realizadas', value: learningProgress.subtractionExercisesDone ?? 0 },
     { label: 'Aciertos (restas)', value: learningProgress.subtractionCorrectAnswers ?? 0 },
     { label: 'Intentos (restas)', value: learningProgress.subtractionAttempts ?? 0 },
+    { label: 'Multiplicaciones realizadas', value: learningProgress.multiplicationExercisesDone ?? 0 },
+    { label: 'Aciertos (multiplicaciones)', value: learningProgress.multiplicationCorrectAnswers ?? 0 },
+    { label: 'Intentos (multiplicaciones)', value: learningProgress.multiplicationAttempts ?? 0 },
   ];
 
   const hasData = summary.some((item) => item.value > 0);
