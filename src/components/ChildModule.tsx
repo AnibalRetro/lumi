@@ -78,21 +78,25 @@ interface LearningProgress {
   readingWordsSeen?: string[];
   readingPhrasesSeen?: string[];
   numbersSeen?: number[];
+  additionExercisesDone?: number;
   attempts: number;
   alphabetAttempts?: number;
   syllableAttempts?: number;
   readingAttempts?: number;
   numberAttempts?: number;
+  additionAttempts?: number;
   correctAnswers: number;
   alphabetCorrectAnswers?: number;
   syllableCorrectAnswers?: number;
   readingCorrectAnswers?: number;
   numberCorrectAnswers?: number;
+  additionCorrectAnswers?: number;
   lastPracticeAt: string | null;
   alphabetLastPracticeAt?: string | null;
   syllableLastPracticeAt?: string | null;
   readingLastPracticeAt?: string | null;
   numberLastPracticeAt?: string | null;
+  additionLastPracticeAt?: string | null;
 }
 
 // --- Helpers ---
@@ -1452,11 +1456,16 @@ const LearningModule = () => {
       text: `${value} ${value === 1 ? 'manzana' : 'manzanas'}`,
     };
   });
+  const [numberActivity, setNumberActivity] = useState<'conteo' | 'sumas'>('conteo');
   const [numberMode, setNumberMode] = useState<'conoce' | 'cuenta' | 'toca'>('conoce');
   const [countChallenge, setCountChallenge] = useState(numberCards[2]);
   const [countOptions, setCountOptions] = useState<number[]>([2, 3, 4]);
   const [targetNumber, setTargetNumber] = useState(5);
   const [numberOptions, setNumberOptions] = useState<number[]>([3, 5, 8]);
+  const [additionMode, setAdditionMode] = useState<'objetos' | 'completa' | 'historia'>('objetos');
+  const [additionChallenge, setAdditionChallenge] = useState({ left: 2, right: 1 });
+  const [additionOptions, setAdditionOptions] = useState<number[]>([2, 3, 4]);
+  const [additionEquation, setAdditionEquation] = useState<string | null>(null);
 
   useEffect(() => {
     if (!feedback) return;
@@ -1488,21 +1497,25 @@ const LearningModule = () => {
         readingWordsSeen: current.readingWordsSeen ?? [],
         readingPhrasesSeen: current.readingPhrasesSeen ?? [],
         numbersSeen: current.numbersSeen ?? [],
+        additionExercisesDone: current.additionExercisesDone ?? 0,
         attempts: current.attempts + 1,
         alphabetAttempts: current.alphabetAttempts ?? 0,
         syllableAttempts: current.syllableAttempts ?? 0,
         readingAttempts: current.readingAttempts ?? 0,
         numberAttempts: current.numberAttempts ?? 0,
+        additionAttempts: current.additionAttempts ?? 0,
         correctAnswers: current.correctAnswers + (isCorrect ? 1 : 0),
         alphabetCorrectAnswers: current.alphabetCorrectAnswers ?? 0,
         syllableCorrectAnswers: current.syllableCorrectAnswers ?? 0,
         readingCorrectAnswers: current.readingCorrectAnswers ?? 0,
         numberCorrectAnswers: current.numberCorrectAnswers ?? 0,
+        additionCorrectAnswers: current.additionCorrectAnswers ?? 0,
         lastPracticeAt: new Date().toISOString(),
         alphabetLastPracticeAt: current.alphabetLastPracticeAt ?? null,
         syllableLastPracticeAt: current.syllableLastPracticeAt ?? null,
         readingLastPracticeAt: current.readingLastPracticeAt ?? null,
         numberLastPracticeAt: current.numberLastPracticeAt ?? null,
+        additionLastPracticeAt: current.additionLastPracticeAt ?? null,
       };
       setStorageItem(LUMI_STORAGE_KEYS.learningProgress, nextProgress);
     };
@@ -2063,21 +2076,25 @@ const LearningModule = () => {
         readingWordsSeen: [],
         readingPhrasesSeen: [],
         numbersSeen: [],
+        additionExercisesDone: 0,
         attempts: 0,
         alphabetAttempts: 0,
         syllableAttempts: 0,
         readingAttempts: 0,
         numberAttempts: 0,
+        additionAttempts: 0,
         correctAnswers: 0,
         alphabetCorrectAnswers: 0,
         syllableCorrectAnswers: 0,
         readingCorrectAnswers: 0,
         numberCorrectAnswers: 0,
+        additionCorrectAnswers: 0,
         lastPracticeAt: null,
         alphabetLastPracticeAt: null,
         syllableLastPracticeAt: null,
         readingLastPracticeAt: null,
         numberLastPracticeAt: null,
+        additionLastPracticeAt: null,
       }) ?? {
         vowelsSeen: [],
         lettersSeen: [],
@@ -2085,21 +2102,25 @@ const LearningModule = () => {
         readingWordsSeen: [],
         readingPhrasesSeen: [],
         numbersSeen: [],
+        additionExercisesDone: 0,
         attempts: 0,
         alphabetAttempts: 0,
         syllableAttempts: 0,
         readingAttempts: 0,
         numberAttempts: 0,
+        additionAttempts: 0,
         correctAnswers: 0,
         alphabetCorrectAnswers: 0,
         syllableCorrectAnswers: 0,
         readingCorrectAnswers: 0,
         numberCorrectAnswers: 0,
+        additionCorrectAnswers: 0,
         lastPracticeAt: null,
         alphabetLastPracticeAt: null,
         syllableLastPracticeAt: null,
         readingLastPracticeAt: null,
         numberLastPracticeAt: null,
+        additionLastPracticeAt: null,
       };
       const currentNumbers = current.numbersSeen ?? [];
       setStorageItem(LUMI_STORAGE_KEYS.learningProgress, {
@@ -2109,6 +2130,103 @@ const LearningModule = () => {
         numberCorrectAnswers: (current.numberCorrectAnswers ?? 0) + (countAttempt && isCorrect ? 1 : 0),
         numberLastPracticeAt: new Date().toISOString(),
       });
+    };
+
+    const updateAdditionProgress = (isCorrect: boolean) => {
+      const current = getStorageItem<LearningProgress>(LUMI_STORAGE_KEYS.learningProgress, {
+        vowelsSeen: [],
+        lettersSeen: [],
+        syllablesSeen: [],
+        readingWordsSeen: [],
+        readingPhrasesSeen: [],
+        numbersSeen: [],
+        additionExercisesDone: 0,
+        attempts: 0,
+        alphabetAttempts: 0,
+        syllableAttempts: 0,
+        readingAttempts: 0,
+        numberAttempts: 0,
+        additionAttempts: 0,
+        correctAnswers: 0,
+        alphabetCorrectAnswers: 0,
+        syllableCorrectAnswers: 0,
+        readingCorrectAnswers: 0,
+        numberCorrectAnswers: 0,
+        additionCorrectAnswers: 0,
+        lastPracticeAt: null,
+        alphabetLastPracticeAt: null,
+        syllableLastPracticeAt: null,
+        readingLastPracticeAt: null,
+        numberLastPracticeAt: null,
+        additionLastPracticeAt: null,
+      }) ?? {
+        vowelsSeen: [],
+        lettersSeen: [],
+        syllablesSeen: [],
+        readingWordsSeen: [],
+        readingPhrasesSeen: [],
+        numbersSeen: [],
+        additionExercisesDone: 0,
+        attempts: 0,
+        alphabetAttempts: 0,
+        syllableAttempts: 0,
+        readingAttempts: 0,
+        numberAttempts: 0,
+        additionAttempts: 0,
+        correctAnswers: 0,
+        alphabetCorrectAnswers: 0,
+        syllableCorrectAnswers: 0,
+        readingCorrectAnswers: 0,
+        numberCorrectAnswers: 0,
+        additionCorrectAnswers: 0,
+        lastPracticeAt: null,
+        alphabetLastPracticeAt: null,
+        syllableLastPracticeAt: null,
+        readingLastPracticeAt: null,
+        numberLastPracticeAt: null,
+        additionLastPracticeAt: null,
+      };
+      setStorageItem(LUMI_STORAGE_KEYS.learningProgress, {
+        ...current,
+        additionExercisesDone: (current.additionExercisesDone ?? 0) + 1,
+        additionAttempts: (current.additionAttempts ?? 0) + 1,
+        additionCorrectAnswers: (current.additionCorrectAnswers ?? 0) + (isCorrect ? 1 : 0),
+        additionLastPracticeAt: new Date().toISOString(),
+      });
+    };
+
+    const makeAdditionOptions = (answer: number) => {
+      const options = [answer];
+      [answer - 1, answer + 1, answer - 2, answer + 2, answer - 3, answer + 3].forEach((value) => {
+        if (value >= 1 && value <= 10 && options.length < 3 && !options.includes(value)) options.push(value);
+      });
+      return options.sort((a, b) => a - b);
+    };
+
+    const pickAdditionChallenge = () => {
+      const left = Math.floor(Math.random() * 5) + 1;
+      const right = Math.floor(Math.random() * (10 - left)) + 1;
+      const answer = left + right;
+      setAdditionChallenge({ left, right });
+      setAdditionOptions(makeAdditionOptions(answer));
+      setAdditionEquation(null);
+    };
+
+    const handleAdditionAnswer = (selected: number) => {
+      const answer = additionChallenge.left + additionChallenge.right;
+      setAdditionEquation(`${additionChallenge.left} + ${additionChallenge.right} = ${answer}`);
+      if (selected === answer) {
+        setFeedback('Lo lograste');
+        speak(String(selected));
+        playFeedbackTone(true);
+        updateAdditionProgress(true);
+      } else {
+        setFeedback('Buen intento, sumemos otra vez');
+        speak(String(selected));
+        playFeedbackTone(false);
+        updateAdditionProgress(false);
+      }
+      window.setTimeout(pickAdditionChallenge, 1300);
     };
 
     const pickCountChallenge = () => {
@@ -2170,6 +2288,13 @@ const LearningModule = () => {
           <p className="text-slate-500 mt-2">Aprendamos números, cantidades y conteo</p>
         </div>
 
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 max-w-3xl mx-auto">
+          <button onClick={() => setNumberActivity('conteo')} className={cn('btn-child py-4 text-xl', numberActivity === 'conteo' ? 'bg-orange-100 border-orange-300 text-orange-700' : 'bg-white border-slate-100')}>Números y conteo</button>
+          <button onClick={() => { setNumberActivity('sumas'); pickAdditionChallenge(); }} className={cn('btn-child py-4 text-xl', numberActivity === 'sumas' ? 'bg-orange-100 border-orange-300 text-orange-700' : 'bg-white border-slate-100')}>Sumas visuales</button>
+        </div>
+
+        {numberActivity === 'conteo' && (
+          <>
         <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 max-w-4xl mx-auto">
           <button onClick={() => setNumberMode('conoce')} className={cn('btn-child py-4 text-xl', numberMode === 'conoce' ? 'bg-amber-100 border-amber-300 text-amber-700' : 'bg-white border-slate-100')}>Conoce los números</button>
           <button onClick={() => { setNumberMode('cuenta'); pickCountChallenge(); }} className={cn('btn-child py-4 text-xl', numberMode === 'cuenta' ? 'bg-amber-100 border-amber-300 text-amber-700' : 'bg-white border-slate-100')}>Cuenta los objetos</button>
@@ -2211,6 +2336,39 @@ const LearningModule = () => {
             </div>
             <div className="grid grid-cols-3 gap-4">
               {numberOptions.map((option) => <button key={option} onClick={() => handleNumberAnswer(option)} className="btn-child py-8 text-5xl font-black bg-white border-amber-100 text-amber-600">{option}</button>)}
+            </div>
+          </div>
+        )}
+          </>
+        )}
+
+        {numberActivity === 'sumas' && (
+          <div className="space-y-6">
+            <div className="text-center">
+              <h4 className="text-3xl font-child font-bold">Sumas visuales</h4>
+              <p className="text-slate-500">Juntamos objetos y contamos cuántos hay en total</p>
+            </div>
+            <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 max-w-4xl mx-auto">
+              <button onClick={() => { setAdditionMode('objetos'); pickAdditionChallenge(); }} className={cn('btn-child py-4 text-xl', additionMode === 'objetos' ? 'bg-amber-100 border-amber-300 text-amber-700' : 'bg-white border-slate-100')}>Sumar con objetos</button>
+              <button onClick={() => { setAdditionMode('completa'); pickAdditionChallenge(); }} className={cn('btn-child py-4 text-xl', additionMode === 'completa' ? 'bg-amber-100 border-amber-300 text-amber-700' : 'bg-white border-slate-100')}>Completa la suma</button>
+              <button onClick={() => { setAdditionMode('historia'); pickAdditionChallenge(); }} className={cn('btn-child py-4 text-xl', additionMode === 'historia' ? 'bg-amber-100 border-amber-300 text-amber-700' : 'bg-white border-slate-100')}>Historia simple</button>
+            </div>
+
+            <div className="max-w-4xl mx-auto space-y-6">
+              <div className="card-lumi text-center bg-amber-50 border-amber-100 space-y-4">
+                {additionMode === 'objetos' && (
+                  <>
+                    <p className="text-5xl leading-relaxed" aria-hidden="true">{Array.from({ length: additionChallenge.left }, () => '🍎').join(' ')} + {Array.from({ length: additionChallenge.right }, () => '🍎').join(' ')}</p>
+                    <p className="text-3xl font-child font-bold text-amber-800">¿Cuántas manzanas hay?</p>
+                  </>
+                )}
+                {additionMode === 'completa' && <p className="text-5xl font-black text-amber-700">{additionChallenge.left} + {additionChallenge.right} = ?</p>}
+                {additionMode === 'historia' && <p className="text-3xl font-child font-bold text-amber-800">Lumi tiene {additionChallenge.left} manzanas y recibe {additionChallenge.right} más. ¿Cuántas tiene ahora?</p>}
+                {additionEquation && <p className="text-2xl font-bold text-emerald-700 bg-white rounded-2xl py-3 px-4 inline-block">{additionEquation}</p>}
+              </div>
+              <div className="grid grid-cols-3 gap-4">
+                {additionOptions.map((option) => <button key={option} onClick={() => handleAdditionAnswer(option)} className="btn-child py-8 text-5xl font-black bg-white border-amber-100 text-amber-600">{option}</button>)}
+              </div>
             </div>
           </div>
         )}
