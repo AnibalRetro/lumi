@@ -1,0 +1,45 @@
+# yaml-language-server: $schema=https://coderabbit.ai/integrations/schema.v2.json
+# CodeRabbit configuration for Lumi.
+# Lumi is a child-facing, accessibility-first React/Vite application.
+language: es-MX
+
+reviews:
+  profile: assertive
+  high_level_summary: true
+  poem: false
+  review_status: true
+  collapse_walkthrough: true
+  auto_review:
+    enabled: true
+    drafts: false
+  path_filters:
+    - "!dist/**"
+    - "!node_modules/**"
+    - "!package-lock.json"
+  path_instructions:
+    - path: "src/components/ChildModule.tsx"
+      instructions: |
+        Revisa con especial cuidado UX infantil, accesibilidad cognitiva, navegación simple,
+        lenguaje positivo y que no haya mensajes punitivos como "fallaste" o "mal".
+        Evita sugerencias que agreguen sobreestimulación, sonidos automáticos o animaciones invasivas.
+    - path: "src/components/ParentModule.tsx"
+      instructions: |
+        Revisa que el contenido para padres no prometa diagnóstico, tratamiento ni resultados clínicos.
+        Verifica que formularios y registros se presenten como apoyo familiar, no como evaluación médica.
+    - path: "src/utils/storage.ts"
+      instructions: |
+        Revisa seguridad, manejo de errores y persistencia local. No sugerir almacenamiento de datos sensibles
+        en backend hasta que exista consentimiento, política de privacidad y diseño de protección de datos.
+    - path: "src/data/**"
+      instructions: |
+        Verifica que los datos mock estén claramente diferenciados de datos reales, especialmente directorios,
+        clínicas, recursos de salud y contenido educativo.
+
+knowledge_base:
+  learnings:
+    scope: local
+  issues:
+    scope: local
+
+chat:
+  auto_reply: true
